@@ -17,7 +17,6 @@ st.markdown("""
         font-size: 2.5rem;
         font-weight: 700;
         color: #1f1f1f;
-        letter-spacing: -0.5px;
     }
     .brand-accent {
         color: #ff2d55;
@@ -41,11 +40,13 @@ st.markdown("""
         text-decoration: underline;
     }
     </style>
-    <div class="main-header"><span class="brand-accent">JX</span>Perience</div>
-    <div class="sub-header">Japanese Franchise Overseas Expansion Platform</div>
-    <div class="tagline">Connecting Japanese brands with serious global investors</div>
-    <div style="margin-bottom: 1rem;"></div>
 """, unsafe_allow_html=True)
+
+# Header
+st.markdown('<div class="main-header"><span class="brand-accent">JX</span>Perience</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-header">Japanese Franchise Overseas Expansion Platform</div>', unsafe_allow_html=True)
+st.markdown('<div class="tagline">Connecting Japanese brands with serious global investors</div>', unsafe_allow_html=True)
+st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
 
 # Load the data
 @st.cache_data
@@ -60,16 +61,20 @@ def get_confidence_badge(confidence):
     if confidence == "YES":
         return "✅ Confirmed"
     elif confidence == "PROBABLE":
-        return "🟡 Probable"
+        return " Probable"
     elif confidence == "NEEDS_VERIFICATION":
         return "⚠️ Verify"
     else:
-        return "❌ No"
+        return " No"
 
 df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence_badge)
 
-# HARDCODE YOUR API KEY HERE
-GROQ_API_KEY = "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"
+# SECURE API KEY - reads from Streamlit Secrets (for cloud) or environment
+GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
+
+# Check if API key exists
+if not GROQ_API_KEY:
+    st.warning("⚠️ API Key not configured. Please add GROQ_API_KEY to your Streamlit secrets.")
 
 client = OpenAI(
     api_key=GROQ_API_KEY,
@@ -98,59 +103,36 @@ if search_term:
 # Display count
 st.subheader(f"Found {len(filtered_df)} Expansion-Ready Brands")
 
-# Display table with clickable links using HTML
-def render_clickable_table(df):
-    # Create HTML table with clickable links
-    html = """
-    <div style="overflow-x: auto;">
-    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-        <thead>
-            <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                <th style="padding: 12px; text-align: left;">Brand</th>
-                <th style="padding: 12px; text-align: left;">Category</th>
-                <th style="padding: 12px; text-align: center;">Japan Stores</th>
-                <th style="padding: 12px; text-align: center;">Overseas</th>
-                <th style="padding: 12px; text-align: center;">Investment</th>
-                <th style="padding: 12px; text-align: center;">Fee</th>
-                <th style="padding: 12px; text-align: center;">Royalty</th>
-                <th style="padding: 12px; text-align: left;">Target Markets</th>
-                <th style="padding: 12px; text-align: center;">Website</th>
-                <th style="padding: 12px; text-align: center;">Status</th>
-            </tr>
-        </thead>
-        <tbody>
-    """
-    
-    for idx, row in df.iterrows():
-        website = row['website'] if pd.notna(row['website']) else ''
-        if website and not website.startswith('http'):
-            website_url = f"https://{website}"
-        else:
-            website_url = website
-        
-        html += f"""
-            <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;"><strong>{row['brand_name']}</strong></td>
-                <td style="padding: 10px;">{row['category']}</td>
-                <td style="padding: 10px; text-align: center;">{row['stores_japan']}</td>
-                <td style="padding: 10px; text-align: center;">{row['stores_overseas']}</td>
-                <td style="padding: 10px; text-align: center;">{row['investment_usd']}</td>
-                <td style="padding: 10px; text-align: center;">${row['franchise_fee_usd']:,.0f}</td>
-                <td style="padding: 10px; text-align: center;">{row['royalty_pct']}%</td>
-                <td style="padding: 10px;">{row['target_markets']}</td>
-                <td style="padding: 10px; text-align: center;"><a href="{website_url}" target="_blank" class="clickable-link">🔗 Visit</a></td>
-                <td style="padding: 10px; text-align: center;">{row['franchise_status']}</td>
-            </tr>
-        """
-    
-    html += """
-        </tbody>
-    </table>
-    </div>
-    """
-    return html
+# Display table with clickable links
+def make_clickable_url(url):
+    if pd.isna(url) or url == '':
+        return 'N/A'
+    if not url.startswith('http'):
+        url = f'https://{url}'
+    return f'<a href="{url}" target="_blank" class="clickable-link">🔗 Visit</a>'
 
-st.markdown(render_clickable_table(filtered_df), unsafe_allow_html=True)
+# Create a copy for display
+display_df = filtered_df.copy()
+
+# Add clickable URLs
+display_df['website'] = display_df['website'].apply(make_clickable_url)
+
+# Rename columns for better display
+display_df = display_df.rename(columns={
+    'brand_name': 'Brand',
+    'category': 'Category',
+    'stores_japan': 'Japan Stores',
+    'stores_overseas': 'Overseas',
+    'investment_usd': 'Investment',
+    'franchise_fee_usd': 'Franchise Fee',
+    'royalty_pct': 'Royalty %',
+    'target_markets': 'Target Markets',
+    'website': 'Website',
+    'franchise_status': 'Status'
+})
+
+# Display as HTML table
+st.markdown(display_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 # Smart Contact Form with AI Scoring
 st.markdown("---")
@@ -175,10 +157,12 @@ with st.form("contact_form"):
     message = st.text_area("Additional Information (optional)", 
                           placeholder="Tell us about your background, location plans, etc.")
     
-    submitted = st.form_submit_button("🚀 Get AI Assessment")
+    submitted = st.form_submit_button(" Get AI Assessment")
     
     if submitted:
-        if not name or not email:
+        if not GROQ_API_KEY:
+            st.error("⚠️ API Key is not configured. Please contact the administrator.")
+        elif not name or not email:
             st.error("⚠️ Please fill in your name and email")
         else:
             brand_info = filtered_df[filtered_df['brand_name'] == selected_brand].iloc[0]

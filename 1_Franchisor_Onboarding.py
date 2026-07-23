@@ -5,7 +5,7 @@ import json
 import os
 
 # --- CONFIGURATION ---
-GROQ_API_KEY = "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" 
+GROQ_API_KEY = "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" 
 CSV_PATH = "C:\\jfa_scraper\\franchise_data.csv"
 
 st.set_page_config(page_title="Franchisor Onboarding", layout="wide")

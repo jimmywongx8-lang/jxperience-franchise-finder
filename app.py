@@ -48,24 +48,44 @@ st.markdown('<div class="sub-header">Japanese Franchise Overseas Expansion Platf
 st.markdown('<div class="tagline">Connecting Japanese brands with serious global investors</div>', unsafe_allow_html=True)
 st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
 
-# Load the data
+# Load the data - works for both local and cloud
 @st.cache_data
 def load_data():
-    df = pd.read_csv("C:\\jfa_scraper\\franchise_data.csv")
-    return df
+    # Try multiple paths for local vs cloud deployment
+    paths_to_try = [
+        "C:\\jfa_scraper\\franchise_data.csv",  # Local Windows
+        "franchise_data.csv",  # Streamlit Cloud root
+        "/mount/src/jxperience-franchise-finder/franchise_data.csv"  # Alternative cloud path
+    ]
+    
+    for path in paths_to_try:
+        try:
+            df = pd.read_csv(path)
+            return df
+        except FileNotFoundError:
+            continue
+    
+    # If all paths fail, return empty DataFrame
+    st.error("⚠️ CSV file not found. Please ensure franchise_data.csv is uploaded to GitHub.")
+    return pd.DataFrame()
 
 df = load_data()
+
+# Check if we have data
+if df.empty:
+    st.warning("⚠️ No data loaded. Please ensure franchise_data.csv exists in your repository.")
+    st.stop()
 
 # Add confidence badges
 def get_confidence_badge(confidence):
     if confidence == "YES":
         return "✅ Confirmed"
     elif confidence == "PROBABLE":
-        return " Probable"
+        return "🟡 Probable"
     elif confidence == "NEEDS_VERIFICATION":
         return "⚠️ Verify"
     else:
-        return " No"
+        return "❌ No"
 
 df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence_badge)
 
@@ -157,7 +177,7 @@ with st.form("contact_form"):
     message = st.text_area("Additional Information (optional)", 
                           placeholder="Tell us about your background, location plans, etc.")
     
-    submitted = st.form_submit_button(" Get AI Assessment")
+    submitted = st.form_submit_button("🚀 Get AI Assessment")
     
     if submitted:
         if not GROQ_API_KEY:
@@ -233,14 +253,14 @@ Be honest and direct. If they're not a good fit, say so."""
                     with col2:
                         st.success("✅ **Strengths:**\n" + "\n".join(ai_analysis.get('strengths', [])))
                         if ai_analysis.get('concerns'):
-                            st.warning("️ **Concerns:**\n" + "\n".join(ai_analysis.get('concerns', [])))
+                            st.warning("⚠️ **Concerns:**\n" + "\n".join(ai_analysis.get('concerns', [])))
                     
                     st.markdown(f"💡 **Recommendation:** {ai_analysis.get('recommendation', 'N/A')}")
                     st.markdown("---")
                     st.write("Your assessment has been saved. A franchise consultant will contact you within 48 hours.")
                     
                 except Exception as e:
-                    st.error(f" AI Analysis failed: {str(e)}")
+                    st.error(f"❌ AI Analysis failed: {str(e)}")
 
 # Footer
 st.markdown("---")

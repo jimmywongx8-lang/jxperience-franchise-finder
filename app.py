@@ -6,9 +6,9 @@ from email.mime.text import MIMEText
 from urllib.parse import quote
 
 # --- ⚠️ SECRETS CONFIGURATION (Loaded from Streamlit Secrets) ⚠️ ---
-YOUR_GMAIL = st.secrets.get("YOUR_GMAIL", "kitchengadgetinsiderl@gmail.com")
-YOUR_APP_PASSWORD = st.secrets.get("zcxf fgde uvst dgbu")
-SHEET_WEBHOOK_URL = st.secrets.get("https://script.google.com/macros/s/AKfycbxyFmg9v8qygV14tOtefxWVNNAlSNqpkXRCDCJlr5itDwtvrdQGMlKiCFCqN29WYnBx/exec")
+YOUR_GMAIL = st.secrets.get("YOUR_GMAIL", "your_email@gmail.com")
+YOUR_APP_PASSWORD = st.secrets.get("YOUR_APP_PASSWORD", "your_app_password")
+SHEET_WEBHOOK_URL = st.secrets.get("SHEET_WEBHOOK_URL", "your_webhook_url")
 
 # --- SESSION STATE ---
 if 'page' not in st.session_state:
@@ -208,4 +208,69 @@ def show_franchisor_portal():
     with tab2:
         st.subheader("Update Your Public Profile")
         st.write("Submit changes to your story, financials, or overseas status.")
-        with st.form("profile
+        with st.form("profile_update"):
+            new_story = st.text_area("Update Company Story", height=150)
+            new_status = st.text_input("Update Overseas Status")
+            update_submitted = st.form_submit_button("Submit Profile Update Request", type="primary")
+            if update_submitted:
+                send_email("Profile Update Request", f"New Story: {new_story}\nNew Status: {new_status}")
+                st.success("Update request sent to administrator!")
+    with tab3:
+        st.subheader("Account Settings")
+        st.info("Live Google Sheet integration and CSV export will be available in the next update.")
+
+# --- INVESTOR PROFILE PAGE ---
+def show_profile():
+    selected = st.sidebar.radio("Select Franchise:", list(FRANCHISES.keys()))
+    st.session_state.selected_franchise = selected
+    data = FRANCHISES[selected]
+    st.header(f"🇵 {selected}")
+    st.caption("Verified Overseas Franchise Opportunities")
+    st.subheader("🌍 Overseas Expansion Status")
+    st.success(f"**{data['overseas_status']}**")
+    st.subheader("Company Overview")
+    st.info(data["story"])
+    st.subheader("📺 Watch & Learn")
+    youtube_url = f"https://www.youtube.com/results?search_query={quote(data['youtube_search'])}"
+    st.markdown(f"[▶️ **Watch Videos**]({youtube_url})")
+    st.subheader("📰 Market Research")
+    news_url = f"https://www.google.com/search?q={quote(data['news_search'])}&tbm=nws"
+    st.markdown(f"[📰 **Read News**]({news_url})")
+    st.markdown("---")
+    st.subheader("💰 Investment Details")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Investment Range", data["investment"])
+    col2.metric("Royalty Fee", data["royalty"])
+    col3.metric("Avg. Sales", data["sales"])
+    st.markdown("**Detailed Breakdown**")
+    st.dataframe(pd.DataFrame(data["financials"]), use_container_width=True, hide_index=True)
+    st.markdown("---")
+    st.subheader("️ Investment Analysis")
+    col_p, col_c = st.columns(2)
+    col_p.markdown(f"✅ **Advantages**\n" + "\n".join([f"- {p}" for p in data["pros"]]))
+    col_c.markdown(f"⚠️ **Considerations**\n" + "\n".join([f"- {c}" for c in data["cons"]]))
+    st.divider()
+    st.subheader(f" Ready to Invest in {selected}?")
+    st.warning("**Pre-Screening Required:** Complete our 2-minute quiz to see if you qualify for an introduction.")
+    if st.button("Start Application", type="primary"):
+        st.session_state.page = 'quiz'
+        st.rerun()
+
+# --- MAIN ROUTER ---
+st.sidebar.title("🇵 JP Franchise Hub")
+st.sidebar.markdown("---")
+if st.sidebar.button(" Investor Portal"):
+    st.session_state.page = 'profile'
+    st.session_state.franchisor_logged_in = False
+    st.rerun()
+if st.sidebar.button("🏢 Franchisor Login"):
+    st.session_state.page = 'franchisor'
+    st.rerun()
+st.sidebar.markdown("---")
+
+if st.session_state.page == 'quiz':
+    show_quiz()
+elif st.session_state.page == 'franchisor':
+    show_franchisor_portal()
+else:
+    show_profile()

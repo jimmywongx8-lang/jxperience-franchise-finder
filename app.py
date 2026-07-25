@@ -4,21 +4,35 @@ import smtplib
 import requests
 from email.mime.text import MIMEText
 from urllib.parse import quote
+import json
+import io
 
-# --- ⚠️ SECRETS CONFIGURATION (Loaded from Streamlit Secrets) ⚠️ ---
-YOUR_GMAIL = st.secrets.get("YOUR_GMAIL", "your_email@gmail.com")
-YOUR_APP_PASSWORD = st.secrets.get("YOUR_APP_PASSWORD", "your_app_password")
-SHEET_WEBHOOK_URL = st.secrets.get("SHEET_WEBHOOK_URL", "your_webhook_url")
+# --- SECRETS ---
+YOUR_GMAIL = st.secrets.get("YOUR_GMAIL")
+YOUR_APP_PASSWORD = st.secrets.get("YOUR_APP_PASSWORD")
+SHEET_WEBHOOK_URL = st.secrets.get("SHEET_WEBHOOK_URL")
+
+# --- CSV URL (63 brands) ---
+CSV_URL = "https://raw.githubusercontent.com/jimmywongx8-lang/jxperience-franchise-finder/main/franchise_data.csv"
 
 # --- SESSION STATE ---
 if 'page' not in st.session_state:
-    st.session_state.page = 'profile'
+    st.session_state.page = 'home'
 if 'selected_franchise' not in st.session_state:
-    st.session_state.selected_franchise = "Coco Ichibanya"
+    st.session_state.selected_franchise = None
 if 'franchisor_logged_in' not in st.session_state:
     st.session_state.franchisor_logged_in = False
 
-# --- FRANCHISE DATABASE (VERIFIED OVERSEAS) ---
+# --- LOAD 63 BRANDS FROM CSV ---
+@st.cache_data(ttl=300)
+def load_brands():
+    try:
+        df = pd.read_csv(CSV_URL)
+        return df
+    except:
+        return pd.DataFrame()
+
+# --- 6 DEEP DIVE PROFILES ---
 FRANCHISES = {
     "Coco Ichibanya": {
         "story": "Coco Ichibanya is Japan's #1 curry house chain with over 1,300 stores. They are AGGRESSIVELY expanding overseas with locations in USA, China, Korea, Singapore, and Europe. They actively recruit overseas franchisees and have a well-established international support system.",
@@ -123,154 +137,50 @@ def save_to_sheet(franchise_name, name, email, capital, experience, industry, lo
         print(f"Sheet error: {e}")
         return False
 
-# --- INVESTOR QUIZ PAGE ---
-def show_quiz():
-    franchise_name = st.session_state.selected_franchise
-    st.header(f"Investor Application: {franchise_name}")
-    if st.button("Back to Profile"):
-        st.session_state.page = 'profile'
-        st.rerun()
-    st.markdown("---")
-    with st.form("quiz"):
-        name = st.text_input("Full Name")
-        email = st.text_input("Email")
-        capital = st.selectbox("Available Capital (USD)?", ["Under $100k", "$100k-$250k", "$250k-$500k", "$500k-$1M", "Over $1M"])
-        experience = st.selectbox("Business Experience?", ["None", "1-3 years", "3-5 years", "5+ years", "Current Franchise Owner"])
-        industry = st.selectbox("Industry Background?", ["F&B / Restaurant", "Retail", "Corporate", "Real Estate", "Other"])
-        location = st.text_input("Target Location/Country")
-        timeline = st.selectbox("Timeline to Open?", ["Just researching", "1-2 years", "6-12 months", "ASAP (<6 months)"])
-        submitted = st.form_submit_button("Submit Application", type="primary")
-        if submitted:
-            if name and email:
-                with st.spinner("Submitting your profile..."):
-                    email_ok = send_email(f"New Lead: {name} for {franchise_name}", f"Name: {name}\nEmail: {email}\nCapital: {capital}\nLocation: {location}")
-                    sheet_ok = save_to_sheet(franchise_name, name, email, capital, experience, industry, location, timeline)
-                if email_ok and sheet_ok:
-                    st.success(f"✅ Thanks {name}! Application submitted for {franchise_name}.")
-                else:
-                    st.error("Technical issue. Please try again.")
-            else:
-                st.error("Please fill in name and email")
-    if st.button("Return to Profile"):
-        st.session_state.page = 'profile'
-        st.rerun()
+def get_leads_from_sheet():
+    """Fetch real leads from Google Sheet"""
+    try:
+        response = requests.get(SHEET_WEBHOOK_URL, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if isinstance(data, list) and len(data) > 0:
+                return data
+    except Exception as e:
+        st.error(f"Error fetching leads: {e}")
+    return None
 
-# --- FRANCHISOR PORTAL PAGE ---
-def show_franchisor_portal():
-    st.header("🇯🇵 Franchisor Partner Portal")
-    if not st.session_state.franchisor_logged_in:
-        st.subheader("Partner Login")
-        st.info("Access restricted to verified Japanese franchise partners.")
-        password = st.text_input("Enter Access Code", type="password")
-        if st.button("Login", type="primary"):
-            if password == "jfa2026": 
-                st.session_state.franchisor_logged_in = True
-                st.rerun()
-            else:
-                st.error("Invalid access code.")
-        st.divider()
-        st.subheader("Not a partner yet?")
-        st.write("Are you a Japanese franchise looking to expand overseas? Request access.")
-        with st.form("access_request"):
-            company = st.text_input("Company Name")
-            contact = st.text_input("Contact Email")
-            req_submitted = st.form_submit_button("Request Partner Access")
-            if req_submitted and company and contact:
-                send_email(f"New Partner Request: {company}", f"Company: {company}\nEmail: {contact}")
-                st.success("Request sent! We will contact you within 24 hours.")
-        return
-
-    st.success("Logged in as Partner")
-    if st.button("Logout"):
-        st.session_state.franchisor_logged_in = False
-        st.rerun()
+# --- HOME PAGE (63 BRANDS TABLE) ---
+def show_home():
+    st.header("🇵 JXPerience: Japanese Franchise Finder")
+    st.caption("Connecting Japanese brands with serious global investors")
     
-    st.markdown("---")
-    tab1, tab2, tab3 = st.tabs(["📊 Lead Dashboard", "📝 Update My Profile", "⚙️ Settings"])
-    with tab1:
-        st.subheader("Your Qualified Investor Leads")
-        st.write("Here is a sample of the high-quality leads we are generating for your brand.")
-        mock_data = {
-            "Date": ["2026-07-25", "2026-07-24", "2026-07-22"],
-            "Investor Name": ["Jimmy Wong", "Sarah Chen", "David Smith"],
-            "Location": ["Hong Kong", "Singapore", "California, USA"],
-            "Capital": ["$100k-$250k", "$500k-$1M", "Over $1M"],
-            "Experience": ["3-5 years (Corporate)", "Current Franchise Owner", "5+ years (F&B)"],
-            "Status": [" Pre-Screened", "🟢 Pre-Screened", "🟡 Pending Review"]
-        }
-        st.dataframe(pd.DataFrame(mock_data), use_container_width=True, hide_index=True)
-        st.divider()
-        st.subheader("Lead Generation Metrics (Last 30 Days)")
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Total Inquiries", "14", "+3 this week")
-        col2.metric("Qualified Leads", "8", "57% conversion")
-        col3.metric("Avg. Investor Capital", "$450k", "High quality")
-    with tab2:
-        st.subheader("Update Your Public Profile")
-        st.write("Submit changes to your story, financials, or overseas status.")
-        with st.form("profile_update"):
-            new_story = st.text_area("Update Company Story", height=150)
-            new_status = st.text_input("Update Overseas Status")
-            update_submitted = st.form_submit_button("Submit Profile Update Request", type="primary")
-            if update_submitted:
-                send_email("Profile Update Request", f"New Story: {new_story}\nNew Status: {new_status}")
-                st.success("Update request sent to administrator!")
-    with tab3:
-        st.subheader("Account Settings")
-        st.info("Live Google Sheet integration and CSV export will be available in the next update.")
-
-# --- INVESTOR PROFILE PAGE ---
-def show_profile():
-    selected = st.sidebar.radio("Select Franchise:", list(FRANCHISES.keys()))
-    st.session_state.selected_franchise = selected
-    data = FRANCHISES[selected]
-    st.header(f"🇵 {selected}")
-    st.caption("Verified Overseas Franchise Opportunities")
-    st.subheader("🌍 Overseas Expansion Status")
-    st.success(f"**{data['overseas_status']}**")
-    st.subheader("Company Overview")
-    st.info(data["story"])
-    st.subheader("📺 Watch & Learn")
-    youtube_url = f"https://www.youtube.com/results?search_query={quote(data['youtube_search'])}"
-    st.markdown(f"[▶️ **Watch Videos**]({youtube_url})")
-    st.subheader("📰 Market Research")
-    news_url = f"https://www.google.com/search?q={quote(data['news_search'])}&tbm=nws"
-    st.markdown(f"[📰 **Read News**]({news_url})")
-    st.markdown("---")
-    st.subheader("💰 Investment Details")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Investment Range", data["investment"])
-    col2.metric("Royalty Fee", data["royalty"])
-    col3.metric("Avg. Sales", data["sales"])
-    st.markdown("**Detailed Breakdown**")
-    st.dataframe(pd.DataFrame(data["financials"]), use_container_width=True, hide_index=True)
-    st.markdown("---")
-    st.subheader("️ Investment Analysis")
-    col_p, col_c = st.columns(2)
-    col_p.markdown(f"✅ **Advantages**\n" + "\n".join([f"- {p}" for p in data["pros"]]))
-    col_c.markdown(f"⚠️ **Considerations**\n" + "\n".join([f"- {c}" for c in data["cons"]]))
-    st.divider()
-    st.subheader(f" Ready to Invest in {selected}?")
-    st.warning("**Pre-Screening Required:** Complete our 2-minute quiz to see if you qualify for an introduction.")
-    if st.button("Start Application", type="primary"):
-        st.session_state.page = 'quiz'
-        st.rerun()
-
-# --- MAIN ROUTER ---
-st.sidebar.title("🇵 JP Franchise Hub")
-st.sidebar.markdown("---")
-if st.sidebar.button(" Investor Portal"):
-    st.session_state.page = 'profile'
-    st.session_state.franchisor_logged_in = False
-    st.rerun()
-if st.sidebar.button("🏢 Franchisor Login"):
-    st.session_state.page = 'franchisor'
-    st.rerun()
-st.sidebar.markdown("---")
-
-if st.session_state.page == 'quiz':
-    show_quiz()
-elif st.session_state.page == 'franchisor':
-    show_franchisor_portal()
-else:
-    show_profile()
+    df = load_brands()
+    
+    if df.empty:
+        st.error("Could not load franchise data. Please check the CSV file.")
+        return
+    
+    st.subheader(f"Found {len(df)} Expansion-Ready Brands")
+    
+    # Search and filters
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        search = st.text_input(" Search brands...", "")
+    with col2:
+        categories = df['Category'].dropna().unique().tolist() if 'Category' in df.columns else []
+        selected_cat = st.multiselect("Filter by Category", categories, default=[])
+    
+    # Apply filters
+    filtered = df.copy()
+    if search:
+        filtered = filtered[filtered['Brand'].str.contains(search, case=False, na=False)]
+    if selected_cat:
+        filtered = filtered[filtered['Category'].isin(selected_cat)]
+    
+    st.write(f"Showing {len(filtered)} brands")
+    
+    # Display table with clickable rows
+    for idx, row in filtered.iterrows():
+        brand = row.get('Brand', 'Unknown')
+        category = row.get('Category', '')
+        japan

@@ -11,11 +11,11 @@ YOUR_APP_PASSWORD = st.secrets.get("YOUR_APP_PASSWORD")
 SHEET_WEBHOOK_URL = st.secrets.get("SHEET_WEBHOOK_URL")
 CSV_URL = "https://raw.githubusercontent.com/jimmywongx8-lang/jxperience-franchise-finder/main/franchise_data.csv"
 
-# --- TRANSLATIONS (Phase 3: 4 Languages) ---
+# --- TRANSLATIONS (Phase 3: 5 Languages including Traditional Chinese) ---
 TRANSLATIONS = {
     "English": {
-        "sidebar_title": "🗾 JP Hub", "nav_header": "Navigation", "home": " Home", "about": "ℹ️ About Us", "franchisor": "🏢 Franchisor",
-        "search_header": " Search & Filter", "search_placeholder": "Search brands", "filter_category": "Filter by Category", "choose_options": "Choose options",
+        "sidebar_title": "🗾 JP Hub", "nav_header": "Navigation", "home": "🏠 Home", "about": "️ About Us", "franchisor": " Franchisor",
+        "search_header": "🔍 Search & Filter", "search_placeholder": "Search brands", "filter_category": "Filter by Category", "choose_options": "Choose options",
         "hero_title": "🗾 Discover Japanese Franchise Opportunities", "hero_subtitle": "Connecting global investors with 63+ expansion-ready Japanese brands",
         "metric_brands": "Brands", "metric_countries": "Countries", "metric_investment": "Investment",
         "found_brands": "Found 63 Expansion-Ready Brands", "showing_brands": "Showing {count} brands", "stores": "stores", "royalty": "Royalty",
@@ -39,15 +39,15 @@ TRANSLATIONS = {
         "language": "🌐 Language",
     },
     "日本語": {
-        "sidebar_title": " JPハブ", "nav_header": "ナビゲーション", "home": "🏠 ホーム", "about": "ℹ️ 私たちについて", "franchisor": "🏢 フランチャイザー",
-        "search_header": " 検索とフィルター", "search_placeholder": "ブランドを検索", "filter_category": "カテゴリでフィルター", "choose_options": "オプションを選択",
+        "sidebar_title": "🗾 JPハブ", "nav_header": "ナビゲーション", "home": " ホーム", "about": "ℹ️ 私たちについて", "franchisor": "🏢 フランチャイザー",
+        "search_header": "🔍 検索とフィルター", "search_placeholder": "ブランドを検索", "filter_category": "カテゴリでフィルター", "choose_options": "オプションを選択",
         "hero_title": "🗾 日本のフランチャイズ機会を発見", "hero_subtitle": "63以上の展開-readyな日本ブランドとグローバル投資家をつなぐ",
         "metric_brands": "ブランド", "metric_countries": "国・地域", "metric_investment": "投資額",
         "found_brands": "63の展開-readyブランドを発見", "showing_brands": "{count}ブランドを表示", "stores": "店舗", "royalty": "ロイヤリティ",
-        "view_details": "📋 詳細を見る", "enquiry": "お問い合わせ →",
-        "footer_text": "© 2026 JXPerience. 日本ブランドとグローバル投資家をつなぐ。", "footer_contact": " お問い合わせ: jxperience.info@gmail.com",
-        "back_brands": "← ブランド一覧に戻る", "company_history": "📖 会社の歴史", "menu_highlights": "🍱 メニューの特徴", "investment_overview": "💰 投資概要",
-        "requirements": "📋 フランチャイズ要件", "support": " サポート内容", "success_story": "⭐ 成功事例", "contact_info": "📞 お問い合わせ情報",
+        "view_details": " 詳細を見る", "enquiry": "お問い合わせ →",
+        "footer_text": "© 2026 JXPerience. 日本ブランドとグローバル投資家をつなぐ。", "footer_contact": "📧 お問い合わせ: jxperience.info@gmail.com",
+        "back_brands": "← ブランド一覧に戻る", "company_history": " 会社の歴史", "menu_highlights": "🍱 メニューの特徴", "investment_overview": "💰 投資概要",
+        "requirements": "📋 フランチャイズ要件", "support": "🤝 サポート内容", "success_story": "⭐ 成功事例", "contact_info": "📞 お問い合わせ情報",
         "submit_enquiry": "📝 お問い合わせを送信", "watch_videos": "▶️ 動画を見る",
         "enquiry_title": "お問い合わせ: {brand}", "back": "← 戻る", "name": "お名前", "email": "メールアドレス", "capital": "資金", "experience": "経験", "industry": "業界", "location": "場所", "timeline": "スケジュール",
         "submit": "送信", "success_msg": "✅ お問い合わせを送信しました！", "error_msg": "名前とメールアドレスを入力してください",
@@ -56,7 +56,7 @@ TRANSLATIONS = {
         "ind_fb": "飲食", "ind_retail": "小売", "ind_corp": "企業", "ind_other": "その他",
         "time_research": "調査中", "time_1_2": "1-2年", "time_6_12": "6-12ヶ月", "time_asap": " ASAP（できるだけ早く）",
         "about_title": "🗾 JXPerienceについて", "about_caption": "私たちのミッションとストーリー", "why_started": "なぜ始めたのか", "faq_title": "❓ よくある質問",
-        "ready_explore": " 探索する準備はできましたか？", "browse": "ブランドを見る", "contact_label": "📧 **お問い合わせ:**",
+        "ready_explore": " 探索する準備はできましたか？", "browse": "ブランドを見る", "contact_label": " **お問い合わせ:**",
         "franchisor_title": "🗾 フランチャイザーポータル", "why_register": "なぜフランチャイザーとして登録するのか？", "what_you_get": "✅ 認定パートナーの特典",
         "access_dashboard": "フランチャイズダッシュボードにアクセス", "new_to_jx": "JXPerienceが初めてですか？", "password": "パスワード", "login": "ログイン", "wrong_password": "パスワードが違います",
         "company": "会社名", "request_access": "アクセスをリクエスト", "request_sent": "リクエストを送信しました！24-48時間以内にご連絡します。", "logged_in": "ログインしました", "logout": "ログアウト",
@@ -69,27 +69,52 @@ TRANSLATIONS = {
         "hero_title": "🗾 发现日本特许经营机会", "hero_subtitle": "连接63+个准备扩张的日本品牌与全球投资者",
         "metric_brands": "品牌", "metric_countries": "国家", "metric_investment": "投资",
         "found_brands": "找到63个可扩张品牌", "showing_brands": "显示 {count} 个品牌", "stores": "门店", "royalty": "版税",
-        "view_details": "📋 查看详情", "enquiry": "咨询 →",
-        "footer_text": "© 2026 JXPerience. 连接日本品牌与全球投资者。", "footer_contact": "📧 联系: jxperience.info@gmail.com",
+        "view_details": " 查看详情", "enquiry": "咨询 →",
+        "footer_text": "© 2026 JXPerience. 连接日本品牌与全球投资者。", "footer_contact": " 联系: jxperience.info@gmail.com",
         "back_brands": "← 返回品牌列表", "company_history": "📖 公司历史", "menu_highlights": "🍱 菜单亮点", "investment_overview": "💰 投资概览",
-        "requirements": "📋 特许经营要求", "support": "🤝 支持服务", "success_story": "⭐ 成功案例", "contact_info": "📞 联系信息",
-        "submit_enquiry": "📝 提交咨询", "watch_videos": "▶️ 观看视频",
+        "requirements": " 特许经营要求", "support": " 支持服务", "success_story": "⭐ 成功案例", "contact_info": "📞 联系信息",
+        "submit_enquiry": " 提交咨询", "watch_videos": "▶️ 观看视频",
         "enquiry_title": "咨询: {brand}", "back": "← 返回", "name": "姓名", "email": "邮箱", "capital": "资金", "experience": "经验", "industry": "行业", "location": "地点", "timeline": "时间线",
         "submit": "提交咨询", "success_msg": "✅ 咨询已提交！", "error_msg": "请填写姓名和邮箱",
         "cap_under": "低于$100k", "cap_100_250": "$100k-$250k", "cap_250_500": "$250k-$500k", "cap_500_1m": "$500k-$1M", "cap_over": "超过$1M",
         "exp_none": "无", "exp_1_3": "1-3年", "exp_3_5": "3-5年", "exp_5_plus": "5年以上", "exp_owner": "特许经营商",
         "ind_fb": "餐饮", "ind_retail": "零售", "ind_corp": "企业", "ind_other": "其他",
         "time_research": "研究中", "time_1_2": "1-2年", "time_6_12": "6-12个月", "time_asap": "尽快",
-        "about_title": "🗾 关于JXPerience", "about_caption": "我们的使命与故事", "why_started": "为什么开始", "faq_title": "❓ 常见问题",
+        "about_title": "🗾 关于JXPerience", "about_caption": "我们的使命与故事", "why_started": "为什么开始", "faq_title": " 常见问题",
         "ready_explore": "🚀 准备好探索了吗？", "browse": "浏览品牌", "contact_label": "📧 **联系:**",
         "franchisor_title": "🗾 特许经营商门户", "why_register": "为什么注册为特许经营商？", "what_you_get": "✅ 作为认证合作伙伴您将获得",
         "access_dashboard": "访问您的特许经营仪表板", "new_to_jx": "JXPerience新手？", "password": "密码", "login": "登录", "wrong_password": "密码错误",
         "company": "公司名称", "request_access": "请求访问", "request_sent": "请求已发送！我们将在24-48小时内联系您。", "logged_in": "已登录", "logout": "登出",
-        "leads": "📊 线索", "settings": "⚙️ 设置", "found_leads": "✅ 找到 {count} 个真实线索！", "download_csv": "📥 下载CSV", "no_leads": "暂无线索", "settings_soon": "设置即将推出",
+        "leads": "📊 线索", "settings": "️ 设置", "found_leads": "✅ 找到 {count} 个真实线索！", "download_csv": "📥 下载CSV", "no_leads": "暂无线索", "settings_soon": "设置即将推出",
         "language": "🌐 语言",
     },
+    "繁體中文": {
+        "sidebar_title": "🗾 JP Hub", "nav_header": "導航", "home": " 首頁", "about": "ℹ️ 關於我們", "franchisor": " 特許經營商",
+        "search_header": "🔍 搜索和篩選", "search_placeholder": "搜索品牌", "filter_category": "按類別篩選", "choose_options": "選擇選項",
+        "hero_title": " 發現日本特許經營機會", "hero_subtitle": "連接63+個準備擴張的日本品牌與全球投資者",
+        "metric_brands": "品牌", "metric_countries": "國家", "metric_investment": "投資",
+        "found_brands": "找到63個可擴張品牌", "showing_brands": "顯示 {count} 個品牌", "stores": "門店", "royalty": "版稅",
+        "view_details": "📋 查看詳情", "enquiry": "諮詢 →",
+        "footer_text": "© 2026 JXPerience. 連接日本品牌與全球投資者。", "footer_contact": "📧 聯繫: jxperience.info@gmail.com",
+        "back_brands": "← 返回品牌列表", "company_history": "📖 公司歷史", "menu_highlights": "🍱 菜單亮點", "investment_overview": "💰 投資概覽",
+        "requirements": "📋 特許經營要求", "support": " 支持服務", "success_story": "⭐ 成功案例", "contact_info": "📞 聯繫信息",
+        "submit_enquiry": " 提交諮詢", "watch_videos": "▶️ 觀看視頻",
+        "enquiry_title": "諮詢: {brand}", "back": "← 返回", "name": "姓名", "email": "郵箱", "capital": "資金", "experience": "經驗", "industry": "行業", "location": "地點", "timeline": "時間線",
+        "submit": "提交諮詢", "success_msg": "✅ 諮詢已提交！", "error_msg": "請填寫姓名和郵箱",
+        "cap_under": "低於$100k", "cap_100_250": "$100k-$250k", "cap_250_500": "$250k-$500k", "cap_500_1m": "$500k-$1M", "cap_over": "超過$1M",
+        "exp_none": "無", "exp_1_3": "1-3年", "exp_3_5": "3-5年", "exp_5_plus": "5年以上", "exp_owner": "特許經營商",
+        "ind_fb": "餐飲", "ind_retail": "零售", "ind_corp": "企業", "ind_other": "其他",
+        "time_research": "研究中", "time_1_2": "1-2年", "time_6_12": "6-12個月", "time_asap": "盡快",
+        "about_title": "🗾 關於JXPerience", "about_caption": "我們的使命與故事", "why_started": "為什麼開始", "faq_title": "❓ 常見問題",
+        "ready_explore": "🚀 準備好探索了嗎？", "browse": "瀏覽品牌", "contact_label": "📧 **聯繫:**",
+        "franchisor_title": "🗾 特許經營商門戶", "why_register": "為什麼註冊為特許經營商？", "what_you_get": "✅ 作為認證合作夥伴您將獲得",
+        "access_dashboard": "訪問您的特許經營儀表板", "new_to_jx": "JXPerience新手？", "password": "密碼", "login": "登錄", "wrong_password": "密碼錯誤",
+        "company": "公司名稱", "request_access": "請求訪問", "request_sent": "請求已發送！我們將在24-48小時內聯繫您。", "logged_in": "已登錄", "logout": "登出",
+        "leads": "📊 線索", "settings": "⚙️ 設置", "found_leads": "✅ 找到 {count} 個真實線索！", "download_csv": "📥 下載CSV", "no_leads": "暫無線索", "settings_soon": "設置即將推出",
+        "language": " 語言",
+    },
     "한국어": {
-        "sidebar_title": "🗾 JP 허브", "nav_header": "내비게이션", "home": "🏠 홈", "about": "️ 우리에 대해", "franchisor": "🏢 프랜차이저",
+        "sidebar_title": " JP 허브", "nav_header": "내비게이션", "home": "🏠 홈", "about": "ℹ️ 우리에 대해", "franchisor": "🏢 프랜차이저",
         "search_header": "🔍 검색 및 필터", "search_placeholder": "브랜드 검색", "filter_category": "카테고리별 필터", "choose_options": "옵션 선택",
         "hero_title": "🗾 일본 프랜차이즈 기회 발견", "hero_subtitle": "63+개의 확장 준비된 일본 브랜드와 글로벌 투자자 연결",
         "metric_brands": "브랜드", "metric_countries": "국가", "metric_investment": "투자",
@@ -105,12 +130,12 @@ TRANSLATIONS = {
         "exp_none": "없음", "exp_1_3": "1-3년", "exp_3_5": "3-5년", "exp_5_plus": "5년 이상", "exp_owner": "프랜차이즈 소유자",
         "ind_fb": "식음료", "ind_retail": "소매", "ind_corp": "기업", "ind_other": "기타",
         "time_research": "연구 중", "time_1_2": "1-2년", "time_6_12": "6-12개월", "time_asap": "가급적 빠르게",
-        "about_title": "🗾 JXPerience에 대해", "about_caption": "우리의 미션과 이야기", "why_started": "시작한 이유", "faq_title": "❓ 자주 묻는 질문",
+        "about_title": " JXPerience에 대해", "about_caption": "우리의 미션과 이야기", "why_started": "시작한 이유", "faq_title": "❓ 자주 묻는 질문",
         "ready_explore": "🚀 탐색 준비가 되셨나요?", "browse": "브랜드 둘러보기", "contact_label": "📧 **연락처:**",
-        "franchisor_title": "🗾 프랜차이저 포털", "why_register": "왜 프랜차이저로 등록해야 하나요?", "what_you_get": "✅ 인증 파트너로서 얻는 것",
+        "franchisor_title": " 프랜차이저 포털", "why_register": "왜 프랜차이저로 등록해야 하나요?", "what_you_get": "✅ 인증 파트너로서 얻는 것",
         "access_dashboard": "프랜차이즈 대시보드 액세스", "new_to_jx": "JXPerience가 처음이신가요?", "password": "비밀번호", "login": "로그인", "wrong_password": "잘못된 비밀번호",
         "company": "회사 이름", "request_access": "액세스 요청", "request_sent": "요청이 전송되었습니다! 24-48시간 내에 연락드리겠습니다.", "logged_in": "로그인됨", "logout": "로그아웃",
-        "leads": "📊 리드", "settings": "️ 설정", "found_leads": "✅ {count}개의 실제 리드 발견!", "download_csv": "📥 CSV 다운로드", "no_leads": "리드가 없습니다", "settings_soon": "설정 준비 중",
+        "leads": "📊 리드", "settings": "⚙️ 설정", "found_leads": "✅ {count}개의 실제 리드 발견!", "download_csv": "📥 CSV 다운로드", "no_leads": "리드가 없습니다", "settings_soon": "설정 준비 중",
         "language": "🌐 언어",
     }
 }
@@ -306,7 +331,7 @@ This **8x growth** in less than two decades is unprecedented in global food cult
 As a personal project, I started JXPerience to:
 
 1. **📊 Aggregate Information** - Bring together comprehensive data on Japanese franchises
-2. ** Connect Investors** - Help serious global investors discover authentic Japanese franchise opportunities
+2. **🤝 Connect Investors** - Help serious global investors discover authentic Japanese franchise opportunities
 3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine
 4. **🍱 Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine
 
@@ -460,7 +485,7 @@ def show_brand_details():
         <div class="success-story">
             <h3 style="margin-top:0; color:#059669;">{story["title"]}</h3>
             <p>{story["story"]}</p>
-            <p style="font-weight:bold; color:#059669; margin-bottom:0;"> {story["metrics"]}</p>
+            <p style="font-weight:bold; color:#059669; margin-bottom:0;">📊 {story["metrics"]}</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -563,11 +588,12 @@ def show_about():
 # --- SIDEBAR ---
 st.sidebar.title(t("sidebar_title")); st.sidebar.markdown("---")
 st.sidebar.subheader(t("language"))
-language = st.sidebar.selectbox("Select Language / 言語を選択 / 选择语言 / 선택 언어", 
-                           ["English", "日本語", "简体中文", "한국어"],
+language = st.sidebar.selectbox("Select Language / 言語を選択 / 选择语言 / 選擇語言 / 선택 언어", 
+                           ["English", "日本語", "简体中文", "繁體中文", "한국어"],
                            index=0 if st.session_state.language == "English" else 
                            1 if st.session_state.language == "日本語" else
-                           2 if st.session_state.language == "简体中文" else 3)
+                           2 if st.session_state.language == "简体中文" else
+                           3 if st.session_state.language == "繁體中文" else 4)
 if language != st.session_state.language:
     st.session_state.language = language; st.rerun()
 

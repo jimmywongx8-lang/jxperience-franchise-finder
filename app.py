@@ -18,16 +18,20 @@ if 'selected_franchise' not in st.session_state:
     st.session_state.selected_franchise = None
 if 'franchisor_logged_in' not in st.session_state:
     st.session_state.franchisor_logged_in = False
+if 'categories' not in st.session_state:
+    st.session_state.categories = []
 
 # --- LOAD 63 BRANDS ---
 @st.cache_data(ttl=300)
 def load_brands():
     try:
         df = pd.read_csv(CSV_URL)
-        categories = df['category'].dropna().unique().tolist()
-        st.session_state.categories = categories
+        # Get unique categories for sidebar
+        if 'category' in df.columns:
+            st.session_state.categories = df['category'].dropna().unique().tolist()
         return df
-    except:
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
         return pd.DataFrame()
 
 # --- 6 DEEP DIVE PROFILES ---
@@ -161,12 +165,11 @@ def show_home():
     
     st.subheader(f"Found {len(df)} Expansion-Ready Brands")
     
-    # Search bar at top
-    search = st.text_input("🔍 Search by brand name, category, or keyword", "", key="search_input")
-    
-    # Category filter
+    # Sidebar Filters (Only show on home page)
+    st.sidebar.subheader("🔍 Search & Filter")
+    search = st.sidebar.text_input("Search brands", "")
     categories = st.session_state.get('categories', [])
-    selected_cat = st.multiselect("Filter by Category", categories, default=[], key="cat_filter")
+    selected_cat = st.sidebar.multiselect("Filter by Category", categories, default=[])
     
     # Apply filters
     filtered = df.copy()
@@ -302,7 +305,7 @@ def show_franchisor():
             st.dataframe(df)
             
             csv = df.to_csv(index=False)
-            st.download_button("📥 Download CSV", csv, "leads.csv")
+            st.download_button(" Download CSV", csv, "leads.csv")
         else:
             st.info("No leads yet")
     
@@ -341,7 +344,7 @@ def show_about():
     
     As a personal project, I started JXPerience to:
     
-    1. **📊 Aggregate Information** - Bring together comprehensive data on Japanese franchises, 
+    1. ** Aggregate Information** - Bring together comprehensive data on Japanese franchises, 
        from well-known brands to emerging opportunities
     
     2. **🤝 Connect Investors** - Help serious global investors discover and connect with authentic 
@@ -350,7 +353,7 @@ def show_about():
     3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine 
        and culture
     
-    4. **🍱 Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, 
+    4. ** Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, 
        fostering deeper understanding and appreciation of Japanese culture
     
     ### The Vision
@@ -369,14 +372,14 @@ def show_about():
     
     st.divider()
     
-    st.subheader(" Ready to Explore?")
+    st.subheader("🚀 Ready to Explore?")
     col_a, col_b = st.columns(2)
     with col_a:
         if st.button("Browse Franchises", use_container_width=True):
             st.session_state.page = 'home'
             st.rerun()
     with col_b:
-        st.info(" Contact: contact@jxperience.com")
+        st.info("📧 Contact: contact@jxperience.com")
 
 # --- SIDEBAR NAVIGATION ---
 st.sidebar.title("🇯🇵 JP Hub")
@@ -390,4 +393,17 @@ if st.sidebar.button("ℹ️ About Us"):
     st.rerun()
 
 if st.sidebar.button("🏢 Franchisor"):
-    st.session_state.page = 'fr
+    st.session_state.page = 'franchisor'
+    st.rerun()
+
+# --- MAIN ROUTER ---
+if st.session_state.page == 'quiz':
+    show_quiz()
+elif st.session_state.page == 'franchisor':
+    show_franchisor()
+elif st.session_state.page == 'profile':
+    show_profile()
+elif st.session_state.page == 'about':
+    show_about()
+else:
+    show_home()

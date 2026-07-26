@@ -88,10 +88,22 @@ st.markdown("""
         border-radius: 10px;
         margin: 20px 0;
     }
-    .beta-banner h4 {
-        color: #92400e;
-        margin-top: 0;
+    .beta-banner h4 { color: #92400e; margin-top: 0; margin-bottom: 10px; }
+    
+    .faq-item {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
         margin-bottom: 10px;
+        border-left: 3px solid #667eea;
+    }
+    .footer {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-size: 0.9em;
+        margin-top: 40px;
+        border-top: 1px solid #e0e0e0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -224,12 +236,19 @@ def show_home():
         """
         st.markdown(html, unsafe_allow_html=True)
         
-        # CHANGED: "Apply →" to "Enquiry →"
         btn = "Deep Dive →" if has_dd else "Enquiry →"
         if st.button(btn, key=idx):
             st.session_state.selected_franchise = brand
             st.session_state.page = "profile" if has_dd else "quiz"
             st.rerun()
+
+    # Footer
+    st.markdown("""
+    <div class="footer">
+        <p>© 2026 JXPerience. Connecting Japanese brands with global investors.</p>
+        <p>📧 Contact: jxperience.info@gmail.com</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 def show_profile():
     brand = st.session_state.selected_franchise
@@ -257,7 +276,7 @@ def show_profile():
         st.markdown("---")
         col_p, col_c = st.columns(2)
         col_p.markdown("✅ **Pros**\n" + "\n".join([f"- {p}" for p in data["pros"]]))
-        col_c.markdown("⚠️ **Cons**\n" + "\n".join([f"- {c}" for c in data["cons"]]))
+        col_c.markdown("️ **Cons**\n" + "\n".join([f"- {c}" for c in data["cons"]]))
         st.divider()
         if st.button("Start Enquiry", type="primary"):
             st.session_state.page = "quiz"
@@ -344,7 +363,7 @@ def show_about():
     
     st.markdown("""
     <div class="beta-banner">
-        <h4> This is a Beta Site — Help Us Build It Together!</h4>
+        <h4>🚧 This is a Beta Site — Help Us Build It Together!</h4>
         <p style="color: #78350f; margin-bottom: 10px;">
             JXPerience is currently in <strong>beta</strong>. We are actively improving the platform and would love your input.
         </p>
@@ -357,6 +376,26 @@ def show_about():
         </p>
     </div>
     """, unsafe_allow_html=True)
+
+    # --- NEW FAQ SECTION ---
+    st.markdown("---")
+    st.subheader("❓ Frequently Asked Questions")
+    
+    faqs = [
+        {"q": "Is there a fee to use this platform?", "a": "No, browsing and submitting enquiries is completely free for investors."},
+        {"q": "How do I know these brands are legitimate?", "a": "We verify overseas expansion status using public data, JETRO reports, and official franchise disclosures. Look for the 'Verified' badge on deep-dive profiles."},
+        {"q": "What happens after I submit an enquiry?", "a": "Your details are securely sent to our team. We will pre-screen your profile and connect you with the franchise's international development team if there is a match."},
+        {"q": "Can I franchise a brand not listed here?", "a": "Yes! Use the 'Co-Create' email link above to suggest a brand. We are always adding new opportunities."}
+    ]
+    
+    for faq in faqs:
+        st.markdown(f"""
+        <div class="faq-item">
+            <p style="font-weight: bold; color: #1a1a2e; margin-bottom: 5px;">{faq["q"]}</p>
+            <p style="color: #666; margin: 0;">{faq["a"]}</p>
+        </div>
+        """, unsafe_allow_html=True)
+    # --- END FAQ ---
     
     st.divider()
     st.subheader("🚀 Ready to Explore?")
@@ -375,7 +414,7 @@ st.sidebar.subheader("Navigation")
 if st.sidebar.button("🏠 Home", use_container_width=True):
     st.session_state.page = "home"
     st.rerun()
-if st.sidebar.button("️ About Us", use_container_width=True):
+if st.sidebar.button("ℹ️ About Us", use_container_width=True):
     st.session_state.page = "about"
     st.rerun()
 if st.sidebar.button("🏢 Franchisor", use_container_width=True):

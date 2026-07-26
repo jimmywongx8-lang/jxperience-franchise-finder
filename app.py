@@ -212,7 +212,7 @@ def show_profile():
     
     if brand in FRANCHISES:
         data = FRANCHISES[brand]
-        st.title(f"🇯 {brand}")
+        st.title(f"🇯🇵 {brand}")
         st.success(f"**{data['overseas_status']}**")
         st.info(data["story"])
         
@@ -305,7 +305,7 @@ def show_franchisor():
             st.dataframe(df)
             
             csv = df.to_csv(index=False)
-            st.download_button(" Download CSV", csv, "leads.csv")
+            st.download_button("📥 Download CSV", csv, "leads.csv")
         else:
             st.info("No leads yet")
     
@@ -344,7 +344,7 @@ def show_about():
     
     As a personal project, I started JXPerience to:
     
-    1. ** Aggregate Information** - Bring together comprehensive data on Japanese franchises, 
+    1. **📊 Aggregate Information** - Bring together comprehensive data on Japanese franchises, 
        from well-known brands to emerging opportunities
     
     2. **🤝 Connect Investors** - Help serious global investors discover and connect with authentic 
@@ -353,7 +353,7 @@ def show_about():
     3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine 
        and culture
     
-    4. ** Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, 
+    4. **🍱 Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, 
        fostering deeper understanding and appreciation of Japanese culture
     
     ### The Vision
@@ -379,7 +379,7 @@ def show_about():
             st.session_state.page = 'home'
             st.rerun()
     with col_b:
-        st.info("📧 Contact: contact@jxperience.com")
+        st.markdown("📧 **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
 
 # --- SIDEBAR NAVIGATION ---
 st.sidebar.title("🇯🇵 JP Hub")

@@ -35,6 +35,10 @@ st.markdown("""
         border-radius: 8px;
         font-weight: 600;
     }
+    /* Sidebar button styling */
+    div[data-testid="stSidebarNav"] {
+        background-color: #ffffff;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -242,7 +246,7 @@ def show_home():
     st.subheader("Found 63 Expansion-Ready Brands")
     
     # Sidebar Filters
-    st.sidebar.subheader(" Search & Filter")
+    st.sidebar.subheader("🔍 Search & Filter")
     search = st.sidebar.text_input("Search brands", "")
     categories = st.session_state.get('categories', [])
     selected_cat = st.sidebar.multiselect("Filter by Category", categories, default=[])
@@ -296,7 +300,7 @@ def show_profile():
         yt_url = f"https://www.youtube.com/results?search_query={quote(data['youtube_search'])}"
         st.markdown(f"[▶️ Watch Videos]({yt_url})")
         
-        st.subheader("📰 News")
+        st.subheader(" News")
         news_url = f"https://www.google.com/search?q={quote(data['news_search'])}&tbm=nws"
         st.markdown(f"[📰 Read News]({news_url})")
         
@@ -371,7 +375,7 @@ def show_franchisor():
         st.session_state.franchisor_logged_in = False
         st.rerun()
     
-    tab1, tab2 = st.tabs(["📊 Leads", "⚙️ Settings"])
+    tab1, tab2 = st.tabs([" Leads", "⚙️ Settings"])
     
     with tab1:
         leads = get_leads()
@@ -381,7 +385,7 @@ def show_franchisor():
             st.dataframe(df)
             
             csv = df.to_csv(index=False)
-            st.download_button(" Download CSV", csv, "leads.csv")
+            st.download_button("📥 Download CSV", csv, "leads.csv")
         else:
             st.info("No leads yet")
     
@@ -389,7 +393,7 @@ def show_franchisor():
         st.info("Settings coming soon")
 
 def show_about():
-    st.title("🗾 About JXPerience")
+    st.title(" About JXPerience")
     st.caption("Our Mission & Story")
     
     st.markdown("---")
@@ -419,16 +423,16 @@ def show_about():
     
     As a personal project, I started JXPerience to:
     
-    1. **📊 Aggregate Information** - Bring together comprehensive data on Japanese franchises, 
+    1. ** Aggregate Information** - Bring together comprehensive data on Japanese franchises, 
        from well-known brands to emerging opportunities
     
     2. **🤝 Connect Investors** - Help serious global investors discover and connect with authentic 
        Japanese franchise opportunities
     
-    3. ** Support Expansion** - Contribute to the continued global growth of Japanese cuisine 
+    3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine 
        and culture
     
-    4. **🍱 Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, 
+    4. ** Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, 
        fostering deeper understanding and appreciation of Japanese culture
     
     ### The Vision
@@ -468,7 +472,7 @@ if st.sidebar.button("ℹ️ About Us", use_container_width=True):
     st.session_state.page = 'about'
     st.rerun()
 
-if st.sidebar.button(" Franchisor", use_container_width=True):
+if st.sidebar.button("🏢 Franchisor", use_container_width=True):
     st.session_state.page = 'franchisor'
     st.rerun()
 

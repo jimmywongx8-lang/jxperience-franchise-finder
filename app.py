@@ -105,6 +105,20 @@ st.markdown("""
     .stAlert {
         border-radius: 8px;
     }
+    
+    /* Benefits section */
+    .benefit-card {
+        background: #f0f7ff;
+        border-left: 4px solid #667eea;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    
+    .benefit-card h4 {
+        color: #1a1a2e;
+        margin-top: 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -416,7 +430,45 @@ def show_quiz():
 def show_franchisor():
     st.title("🗾 Franchisor Portal")
     
+    # Add clear explanation of benefits
+    st.markdown("""
+    <div style='margin-bottom: 25px;'>
+        <h3 style='color: #1a1a2e; margin-top: 0;'>Why Register as a Franchisor?</h3>
+        <p style='font-size: 1.1em; line-height: 1.6;'>
+            As a Japanese franchise brand, you have unique access to the global market. 
+            Our platform connects you directly with qualified international investors.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Benefits section
+    st.markdown("""
+    <div class='benefit-card'>
+        <h4>✅ What You'll Get as a Verified Partner</h4>
+        <ul style='padding-left: 20px; margin: 15px 0;'>
+            <li><strong>Real-time qualified leads</strong> - See genuine investor applications as they come in</li>
+            <li><strong>Pre-screened investors</strong> - All applicants are vetted for serious investment capacity</li>
+            <li><strong>Dedicated dashboard</strong> - Track your leads and review applications in one place</li>
+            <li><strong>CSV export</strong> - Download your leads in spreadsheet format</li>
+            <li><strong>Direct connection</strong> - Contact investors directly through our secure platform</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+    
     if not st.session_state.franchisor_logged_in:
+        # Add explanation for login section
+        st.markdown("""
+        <div style='margin-bottom: 25px;'>
+            <h3 style='color: #1a1a2e; margin-top: 0;'>Access Your Franchise Dashboard</h3>
+            <p style='font-size: 1.1em; line-height: 1.6;'>
+                If your brand is already approved as a partner, enter your access code to see your leads.
+                <br><br>
+                <strong>Not sure if you're approved?</strong> Check your email for the access code, or 
+                <strong>request access</strong> below if you're a new franchise brand.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         pwd = st.text_input("Password", type="password")
         if st.button("Login"):
             if pwd == "jfa2026":
@@ -425,12 +477,34 @@ def show_franchisor():
             else:
                 st.error("Wrong password")
         
+        # Add explanation for request access
+        st.markdown("""
+        <div style='margin-top: 30px;'>
+            <h3 style='color: #1a1a2e; margin-top: 0;'>New to JXPerience?</h3>
+            <p style='font-size: 1.1em; line-height: 1.6;'>
+                If you're a Japanese franchise brand looking to expand internationally, 
+                you can request access to our platform.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         with st.form("request"):
             company = st.text_input("Company")
             email = st.text_input("Email")
+            st.markdown("""
+            <p style='font-size: 0.9em; color: #666;'>
+                By submitting this form, you'll receive:
+                <ul style='padding-left: 20px; margin-top: 10px;'>
+                    <li>Confirmation of your request</li>
+                    <li>Review of your brand's expansion readiness</li>
+                    <li>Access code within 24-48 hours</li>
+                </ul>
+            </p>
+            """, unsafe_allow_html=True)
+            
             if st.form_submit_button("Request Access"):
                 send_email("Partner Request", f"{company}: {email}")
-                st.success("Request sent!")
+                st.success("Request sent! We'll contact you within 24-48 hours.")
         return
     
     st.success("Logged in")

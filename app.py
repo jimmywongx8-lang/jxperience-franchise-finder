@@ -256,7 +256,7 @@ def show_profile():
         st.markdown("---")
         col_p, col_c = st.columns(2)
         col_p.markdown("✅ **Pros**\n" + "\n".join([f"- {p}" for p in data["pros"]]))
-        col_c.markdown("⚠️ **Cons**\n" + "\n".join([f"- {c}" for c in data["cons"]]))
+        col_c.markdown("️ **Cons**\n" + "\n".join([f"- {c}" for c in data["cons"]]))
         st.divider()
         if st.button("Start Application", type="primary"):
             st.session_state.page = "quiz"
@@ -341,7 +341,7 @@ def show_about():
     with col3: st.metric("Growth Period", "~18 years", "JETRO Data")
     st.markdown("This **8x growth** in less than two decades is unprecedented in global food culture history.\n\n### Our Mission\n\nAs a personal project, I started JXPerience to:\n\n1. **📊 Aggregate Information** - Bring together comprehensive data on Japanese franchises, from well-known brands to emerging opportunities\n2. **🤝 Connect Investors** - Help serious global investors discover and connect with authentic Japanese franchise opportunities\n3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine and culture\n4. **🍱 Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, fostering deeper understanding and appreciation of Japanese culture\n\n### The Vision\n\nBy making franchise information more accessible, we hope to:\n- Support more people in discovering authentic Japanese cuisine\n- Facilitate meaningful cultural exchanges through food\n- Create shared experiences that bring people together\n- Help Japanese brands find the right partners for global expansion\n\n---\n\n*This platform is a labor of love, built to support the continued growth and appreciation of Japanese culinary excellence worldwide.*")
     
-    # === NEW BETA / CO-CREATE BANNER ===
+    # === BETA / CO-CREATE BANNER ===
     st.markdown("""
     <div class="beta-banner">
         <h4>🚧 This is a Beta Site — Help Us Build It Together!</h4>
@@ -360,20 +360,20 @@ def show_about():
     # === END BETA BANNER ===
     
     st.divider()
-    st.subheader("🚀 Ready to Explore?")
+    st.subheader(" Ready to Explore?")
     col_a, col_b = st.columns(2)
     with col_a:
         if st.button("Browse Franchises", use_container_width=True):
             st.session_state.page = "home"
             st.rerun()
     with col_b:
-        st.markdown("📧 **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
+        st.markdown(" **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
 
 # --- SIDEBAR ---
 st.sidebar.title("🗾 JP Hub")
 st.sidebar.markdown("---")
 st.sidebar.subheader("Navigation")
-if st.sidebar.button("🏠 Home", use_container_width=True):
+if st.sidebar.button(" Home", use_container_width=True):
     st.session_state.page = "home"
     st.rerun()
 if st.sidebar.button("ℹ️ About Us", use_container_width=True):

@@ -80,6 +80,19 @@ st.markdown("""
     .brand-stats { text-align: right; margin-right: 20px; }
     .brand-investment { font-size: 0.95em; color: #333; margin: 0 0 5px 0; font-weight: 600; }
     .brand-royalty { font-size: 0.85em; color: #666; margin: 0; }
+    
+    .beta-banner {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-left: 4px solid #f59e0b;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+    }
+    .beta-banner h4 {
+        color: #92400e;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -88,8 +101,8 @@ def extract_domain(url):
     if pd.isna(url) or not url:
         return ""
     try:
-        url = str(url).replace('http://', '').replace('https://', '').replace('www.', '')
-        return url.split('/')[0].split('?')[0]
+        url = str(url).replace("http://", "").replace("https://", "").replace("www.", "")
+        return url.split("/")[0].split("?")[0]
     except:
         return ""
 
@@ -97,11 +110,11 @@ def extract_domain(url):
 def load_brands():
     try:
         df = pd.read_csv(CSV_URL)
-        if 'category' in df.columns:
-            st.session_state.categories = df['category'].dropna().unique().tolist()
-        if 'website' in df.columns:
-            df['domain'] = df['website'].apply(extract_domain)
-            df['logo_url'] = df['domain'].apply(lambda d: f"https://www.google.com/s2/favicons?domain={d}&sz=128" if d else "")
+        if "category" in df.columns:
+            st.session_state.categories = df["category"].dropna().unique().tolist()
+        if "website" in df.columns:
+            df["domain"] = df["website"].apply(extract_domain)
+            df["logo_url"] = df["domain"].apply(lambda d: f"https://www.google.com/s2/favicons?domain={d}&sz=128" if d else "")
         return df
     except Exception as e:
         st.error(f"Error loading data: {e}")
@@ -121,11 +134,11 @@ FRANCHISES = {
 def send_email(subject, body, to_email=None):
     if not to_email: to_email = YOUR_GMAIL
     msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = YOUR_GMAIL
-    msg['To'] = to_email
+    msg["Subject"] = subject
+    msg["From"] = YOUR_GMAIL
+    msg["To"] = to_email
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(YOUR_GMAIL, YOUR_APP_PASSWORD)
             server.send_message(msg)
         return True
@@ -172,28 +185,27 @@ def show_home():
     
     st.sidebar.subheader("🔍 Search & Filter")
     search = st.sidebar.text_input("Search brands", "")
-    categories = st.session_state.get('categories', [])
+    categories = st.session_state.get("categories", [])
     selected_cat = st.sidebar.multiselect("Filter by Category", categories, default=[])
     
     filtered = df.copy()
     if search:
-        filtered = filtered[filtered['brand_name'].str.contains(search, case=False, na=False) | filtered['category'].str.contains(search, case=False, na=False)]
+        filtered = filtered[filtered["brand_name"].str.contains(search, case=False, na=False) | filtered["category"].str.contains(search, case=False, na=False)]
     if selected_cat:
-        filtered = filtered[filtered['category'].isin(selected_cat)]
+        filtered = filtered[filtered["category"].isin(selected_cat)]
     
     st.write(f"Showing {len(filtered)} brands")
     
     for idx, row in filtered.iterrows():
-        brand = row.get('brand_name', 'Unknown')
+        brand = row.get("brand_name", "Unknown")
         has_dd = brand in FRANCHISES
-        logo_url = row.get('logo_url', '')
+        logo_url = row.get("logo_url", "")
         first_letter = brand[0].upper() if brand else "?"
-        category = row.get('category', '')
-        stores = row.get('stores_japan', '')
-        investment = row.get('investment_usd', '')
-        royalty = row.get('royalty_pct', '')
+        category = row.get("category", "")
+        stores = row.get("stores_japan", "")
+        investment = row.get("investment_usd", "")
+        royalty = row.get("royalty_pct", "")
         
-        # Build HTML with double quotes to avoid conflicts
         html = f"""
         <div class="brand-row">
             <div class="brand-logo-wrapper">
@@ -215,16 +227,16 @@ def show_home():
         btn = "Deep Dive →" if has_dd else "Apply →"
         if st.button(btn, key=idx):
             st.session_state.selected_franchise = brand
-            st.session_state.page = 'profile' if has_dd else 'quiz'
+            st.session_state.page = "profile" if has_dd else "quiz"
             st.rerun()
 
 def show_profile():
     brand = st.session_state.selected_franchise
     if not brand:
-        st.session_state.page = 'home'
+        st.session_state.page = "home"
         st.rerun()
     if st.button("← Back"):
-        st.session_state.page = 'home'
+        st.session_state.page = "home"
         st.rerun()
     if brand in FRANCHISES:
         data = FRANCHISES[brand]
@@ -247,7 +259,7 @@ def show_profile():
         col_c.markdown("⚠️ **Cons**\n" + "\n".join([f"- {c}" for c in data["cons"]]))
         st.divider()
         if st.button("Start Application", type="primary"):
-            st.session_state.page = 'quiz'
+            st.session_state.page = "quiz"
             st.rerun()
     else:
         st.title(brand)
@@ -257,7 +269,7 @@ def show_quiz():
     brand = st.session_state.selected_franchise or "General"
     st.title(f"Apply: {brand}")
     if st.button("← Back"):
-        st.session_state.page = 'home'
+        st.session_state.page = "home"
         st.rerun()
     with st.form("quiz"):
         name = st.text_input("Name")
@@ -328,12 +340,31 @@ def show_about():
     with col2: st.metric("Japanese Restaurants (Today)", "200,000+", "+733% growth")
     with col3: st.metric("Growth Period", "~18 years", "JETRO Data")
     st.markdown("This **8x growth** in less than two decades is unprecedented in global food culture history.\n\n### Our Mission\n\nAs a personal project, I started JXPerience to:\n\n1. **📊 Aggregate Information** - Bring together comprehensive data on Japanese franchises, from well-known brands to emerging opportunities\n2. **🤝 Connect Investors** - Help serious global investors discover and connect with authentic Japanese franchise opportunities\n3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine and culture\n4. **🍱 Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, fostering deeper understanding and appreciation of Japanese culture\n\n### The Vision\n\nBy making franchise information more accessible, we hope to:\n- Support more people in discovering authentic Japanese cuisine\n- Facilitate meaningful cultural exchanges through food\n- Create shared experiences that bring people together\n- Help Japanese brands find the right partners for global expansion\n\n---\n\n*This platform is a labor of love, built to support the continued growth and appreciation of Japanese culinary excellence worldwide.*")
+    
+    # === NEW BETA / CO-CREATE BANNER ===
+    st.markdown("""
+    <div class="beta-banner">
+        <h4>🚧 This is a Beta Site — Help Us Build It Together!</h4>
+        <p style="color: #78350f; margin-bottom: 10px;">
+            JXPerience is currently in <strong>beta</strong>. We are actively improving the platform and would love your input.
+        </p>
+        <p style="color: #78350f; margin-bottom: 10px;">
+            <strong>🤝 Co-Create With Us</strong> — Have suggestions, spotted a bug, or want to recommend a franchise brand to add? 
+            We invite you to share your comments and improvement ideas directly with us.
+        </p>
+        <p style="color: #78350f; margin: 0;">
+            📧 <strong>Email us at:</strong> <a href="mailto:jxperience.info@gmail.com?subject=JXPerience Feedback&body=Hi, I'd like to share some feedback about JXPerience...">jxperience.info@gmail.com</a>
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    # === END BETA BANNER ===
+    
     st.divider()
     st.subheader("🚀 Ready to Explore?")
     col_a, col_b = st.columns(2)
     with col_a:
         if st.button("Browse Franchises", use_container_width=True):
-            st.session_state.page = 'home'
+            st.session_state.page = "home"
             st.rerun()
     with col_b:
         st.markdown("📧 **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
@@ -343,19 +374,19 @@ st.sidebar.title("🗾 JP Hub")
 st.sidebar.markdown("---")
 st.sidebar.subheader("Navigation")
 if st.sidebar.button("🏠 Home", use_container_width=True):
-    st.session_state.page = 'home'
+    st.session_state.page = "home"
     st.rerun()
 if st.sidebar.button("ℹ️ About Us", use_container_width=True):
-    st.session_state.page = 'about'
+    st.session_state.page = "about"
     st.rerun()
 if st.sidebar.button("🏢 Franchisor", use_container_width=True):
-    st.session_state.page = 'franchisor'
+    st.session_state.page = "franchisor"
     st.rerun()
 st.sidebar.markdown("---")
 
 # --- ROUTER ---
-if st.session_state.page == 'quiz': show_quiz()
-elif st.session_state.page == 'franchisor': show_franchisor()
-elif st.session_state.page == 'profile': show_profile()
-elif st.session_state.page == 'about': show_about()
+if st.session_state.page == "quiz": show_quiz()
+elif st.session_state.page == "franchisor": show_franchisor()
+elif st.session_state.page == "profile": show_profile()
+elif st.session_state.page == "about": show_about()
 else: show_home()

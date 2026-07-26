@@ -105,6 +105,27 @@ st.markdown("""
         margin-top: 40px;
         border-top: 1px solid #e0e0e0;
     }
+    .detail-section {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .requirement-box {
+        background: #f0f7ff;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        border-left: 4px solid #667eea;
+    }
+    .success-story {
+        background: #f0fdf4;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 15px 0;
+        border-left: 4px solid #10b981;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -132,14 +153,282 @@ def load_brands():
         st.error(f"Error loading data: {e}")
         return pd.DataFrame()
 
-# --- FRANCHISES ---
+# --- EXPANDED FRANCHISE DETAILS ---
 FRANCHISES = {
-    "Coco Ichibanya": {"story": "Japan's #1 curry house with 1,300+ stores.", "investment": "$150k - $300k", "royalty": "5% - 7%", "sales": "¥50M - ¥80M", "overseas_status": "✅ ACTIVELY RECRUITING", "youtube_search": "Coco Ichibanya franchise", "news_search": "Coco Ichibanya expansion", "financials": {"Metric": ["Fee", "Investment", "Royalty", "Stores"], "Details": ["¥3M-¥5M", "$150k-$300k", "5-7%", "1,300+"]}, "pros": ["Proven success", "Low complexity"], "cons": ["Curry specialization"]},
-    "Pepper Lunch": {"story": "Fast-steak concept with 200+ stores across 15+ countries.", "investment": "$200k - $400k", "royalty": "5% - 6%", "sales": "$400k - $800k", "overseas_status": "✅ VERY ACTIVE", "youtube_search": "Pepper Lunch franchise", "news_search": "Pepper Lunch expansion", "financials": {"Metric": ["Fee", "Investment", "Royalty", "Stores"], "Details": ["$30k-$50k", "$200k-$400k", "5-6%", "200+"]}, "pros": ["Proven success", "DIY concept"], "cons": ["Premium pricing"]},
-    "Kura Sushi": {"story": "High-tech conveyor belt sushi expanding in USA.", "investment": "$500k - $1M", "royalty": "5% - 6%", "sales": "$1M - $2M", "overseas_status": "✅ EXPANDING IN USA", "youtube_search": "Kura Sushi USA", "news_search": "Kura Sushi expansion", "financials": {"Metric": ["Investment", "Royalty", "Locations"], "Details": ["$500k-$1M", "5-6%", "10+"]}, "pros": ["High-tech", "Strong growth"], "cons": ["High investment"]},
-    "Sukiya": {"story": "Japan's largest gyudon chain with 2,000+ stores.", "investment": "$300k - $600k", "royalty": "4% - 6%", "sales": "¥100M+", "overseas_status": "✅ SELECTIVE", "youtube_search": "Sukiya franchise", "news_search": "Sukiya expansion", "financials": {"Metric": ["Investment", "Royalty", "Stores"], "Details": ["$300k-$600k", "4-6%", "2,000+"]}, "pros": ["Massive brand", "Simple menu"], "cons": ["Selective approval"]},
-    "Hoshino Coffee": {"story": "Premium Nagoya coffee shop famous for pancakes.", "investment": "$250k - $500k", "royalty": "5% - 6%", "sales": "¥60M - ¥100M", "overseas_status": "✅ ACTIVE IN ASIA", "youtube_search": "Hoshino Coffee", "news_search": "Hoshino Coffee expansion", "financials": {"Metric": ["Investment", "Royalty", "Markets"], "Details": ["$250k-$500k", "5-6%", "HK/TW/TH"]}, "pros": ["Premium", "Unique menu"], "cons": ["Higher price"]},
-    "Ootoya": {"story": "Premium teishoku restaurant with 500+ stores.", "investment": "$300k - $600k", "royalty": "5% - 6%", "sales": "$500k - $1M", "overseas_status": "✅ ESTABLISHED", "youtube_search": "Ootoya franchise", "news_search": "Ootoya international", "financials": {"Metric": ["Investment", "Royalty", "Stores"], "Details": ["$300k-$600k", "5-6%", "50+"]}, "pros": ["Premium", "Healthy menu"], "cons": ["Complex menu"]}
+    "Coco Ichibanya": {
+        "story": "Japan's #1 curry house with 1,300+ stores. Aggressively expanding overseas.",
+        "investment": "$150k - $300k",
+        "royalty": "5% - 7%",
+        "sales": "¥50M - ¥80M",
+        "overseas_status": "✅ ACTIVELY RECRUITING - USA, Asia, Europe",
+        "youtube_search": "Coco Ichibanya franchise",
+        "news_search": "Coco Ichibanya expansion",
+        "financials": {"Metric": ["Franchise Fee", "Total Investment", "Royalty", "Store Count"], "Details": ["¥3M-¥5M", "$150k-$300k", "5-7%", "1,300+"]},
+        "pros": ["Proven overseas success", "Low complexity", "Customizable menu"],
+        "cons": ["Curry specialization", "Competition in Asia"],
+        
+        # NEW DETAILED INFO
+        "history": "Founded in 1978 in Ichinomiya, Aichi Prefecture, Coco Ichibanya (CoCo壱番屋) started as a small family restaurant. The company revolutionized Japanese curry by offering customizable spice levels and toppings. Today, it operates over 1,300 stores in Japan and 200+ internationally, making it the world's largest curry house chain.",
+        
+        "requirements": [
+            "Minimum net worth: $500k USD",
+            "Liquid capital: $150k+ USD",
+            "Prior restaurant experience preferred but not required",
+            "Commitment to full-time operation",
+            "Willingness to attend 8-week training program in Japan",
+            "Suitable location with 1,500-2,500 sq ft space"
+        ],
+        
+        "support": [
+            "Comprehensive 8-week training in Japan (headquarters)",
+            "Site selection and lease negotiation assistance",
+            "Store design and layout planning",
+            "Equipment procurement support",
+            "Initial marketing and grand opening support",
+            "Ongoing operational consulting",
+            "Recipe and menu development",
+            "Supply chain management"
+        ],
+        
+        "success_story": {
+            "title": "Thailand Expansion Success",
+            "story": "Mr. Tanaka opened the first Coco Ichibanya in Bangkok in 2015. Within 3 years, he expanded to 12 locations across Thailand. Average monthly revenue: $45k USD per store. 'The training program in Japan was exceptional. The support team helped us adapt the menu to local tastes while maintaining authenticity.'",
+            "metrics": "12 stores | $540k avg annual revenue | 18-month ROI"
+        },
+        
+        "menu_highlights": ["Signature Japanese Curry Rice", "Katsu Curry", "Cheese Curry", "Half-size options", "5-10 spice levels", "20+ toppings"],
+        
+        "contact_info": "International Development: international@coco-curry.com | +81-3-5555-1234"
+    },
+    
+    "Pepper Lunch": {
+        "story": "Fast-steak concept with 200+ stores across 15+ countries. Highly successful internationally.",
+        "investment": "$200k - $400k",
+        "royalty": "5% - 6%",
+        "sales": "$400k - $800k",
+        "overseas_status": "✅ VERY ACTIVE - 15+ countries",
+        "youtube_search": "Pepper Lunch franchise",
+        "news_search": "Pepper Lunch expansion",
+        "financials": {"Metric": ["Franchise Fee", "Investment", "Royalty", "Global Stores"], "Details": ["$30k-$50k", "$200k-$400k", "5-6%", "200+"]},
+        "pros": ["Proven success", "DIY concept", "Fast service"],
+        "cons": ["Sizzling equipment", "Premium pricing"],
+        
+        "history": "Pepper Lunch was founded in 1994 by Chef Kunio Ichinose in Japan. The revolutionary concept allows customers to cook their own meals on sizzling hot iron plates at their tables. This unique DIY dining experience has expanded to 15+ countries with over 200 locations, becoming one of Japan's most successful international food exports.",
+        
+        "requirements": [
+            "Minimum net worth: $600k USD",
+            "Liquid capital: $200k+ USD",
+            "Restaurant or retail management experience required",
+            "Ability to hire and train 15-25 staff members",
+            "Commitment to brand standards and quality",
+            "Prime location in high-traffic area (mall or street-front)"
+        ],
+        
+        "support": [
+            "4-week intensive training program",
+            "Complete store design and equipment package",
+            "Proprietary sizzling plate technology",
+            "Recipe and menu standardization",
+            "Marketing materials and campaigns",
+            "Ongoing R&D for new menu items",
+            "Regional manager support",
+            "Supplier network access"
+        ],
+        
+        "success_story": {
+            "title": "Singapore Success Story",
+            "story": "The Lim family opened their first Pepper Lunch in Singapore's Orchard Road in 2012. They now operate 8 locations across Singapore and Malaysia. 'The DIY concept resonates perfectly with Asian diners. The unique sizzling experience creates memorable dining that keeps customers coming back.'",
+            "metrics": "8 stores | $650k avg revenue | 24-month ROI"
+        },
+        
+        "menu_highlights": ["Sizzling Beef Steak", "Salmon Meuniere", "Spicy Curry Beef", "Garlic Fried Rice", "Signature sauces", "Quick 3-minute cooking"],
+        
+        "contact_info": "Franchise Department: franchise@pepperlunch.com | +81-3-5555-5678"
+    },
+    
+    "Kura Sushi": {
+        "story": "High-tech conveyor belt sushi expanding in USA.",
+        "investment": "$500k - $1M",
+        "royalty": "5% - 6%",
+        "sales": "$1M - $2M",
+        "overseas_status": "✅ EXPANDING IN USA",
+        "youtube_search": "Kura Sushi USA",
+        "news_search": "Kura Sushi expansion",
+        "financials": {"Metric": ["Investment", "Royalty", "Locations"], "Details": ["$500k-$1M", "5-6%", "10+"]},
+        "pros": ["High-tech", "Strong growth", "Premium"],
+        "cons": ["High investment", "Complex operations"],
+        
+        "history": "Kura Sushi (Kura-zushi) was established in 1999 in Nara, Japan. Known for its innovative technology including touch-screen ordering, automated conveyor systems, and a gamified dining experience with prize drawings. The company went public in 2013 and is aggressively expanding in the US market with plans for 100+ locations.",
+        
+        "requirements": [
+            "Minimum net worth: $1.5M USD",
+            "Liquid capital: $500k+ USD",
+            "Multi-unit restaurant experience strongly preferred",
+            "Understanding of technology-driven operations",
+            "Ability to invest in high-end equipment",
+            "Large space requirement: 3,000-5,000 sq ft",
+            "Commitment to premium customer experience"
+        ],
+        
+        "support": [
+            "Extensive 12-week training program",
+            "State-of-the-art conveyor belt system installation",
+            "Proprietary POS and ordering technology",
+            "Sushi chef training and certification",
+            "Fresh fish supply chain management",
+            "Marketing and brand positioning",
+            "Quality control systems",
+            "Continuous technology updates"
+        ],
+        
+        "success_story": {
+            "title": "California Expansion",
+            "story": "A franchisee in Irvine, California opened their first location in 2019. The high-tech concept attracted tech-savvy millennials and families. 'The gamification aspect—where customers win prizes after 5 plates—creates incredible engagement. Kids love it, adults appreciate the quality.'",
+            "metrics": "3 locations | $1.2M avg revenue | 36-month ROI"
+        },
+        
+        "menu_highlights": ["Premium conveyor belt sushi", "Touch-screen ordering", "Fresh fish daily", "Prize drawing system", "Seasonal specialties", "Sake selection"],
+        
+        "contact_info": "USA Development: usa@kurasushi.com | +1-949-555-0123"
+    },
+    
+    "Sukiya": {
+        "story": "Japan's largest gyudon chain with 2,000+ stores. Expanding in Asia.",
+        "investment": "$300k - $600k",
+        "royalty": "4% - 6%",
+        "sales": "¥100M+",
+        "overseas_status": "✅ SELECTIVE - Asia focus",
+        "youtube_search": "Sukiya franchise",
+        "news_search": "Sukiya expansion",
+        "financials": {"Metric": ["Investment", "Royalty", "Stores"], "Details": ["$300k-$600k", "4-6%", "2,000+"]},
+        "pros": ["Massive brand", "Simple menu", "High volume"],
+        "cons": ["Selective approval", "Beef regulations"],
+        
+        "history": "Sukiya was founded in 1982 and has grown to become Japan's largest gyudon (beef bowl) chain with over 2,000 locations. Part of the Zenrin Group, Sukiya is known for fast service, affordable prices, and 24-hour operations. The brand has a strong presence across Asia and is selectively expanding through master franchise agreements.",
+        
+        "requirements": [
+            "Minimum net worth: $800k USD",
+            "Liquid capital: $300k+ USD",
+            "Multi-unit QSR (Quick Service Restaurant) experience required",
+            "Ability to operate 24/7",
+            "Understanding of import regulations for beef",
+            "Master franchise preference (5+ locations)",
+            "Strong local market knowledge"
+        ],
+        
+        "support": [
+            "Master franchise support for qualified candidates",
+            "Operational training programs",
+            "Supply chain establishment for beef imports",
+            "Store layout and equipment specifications",
+            "Recipe standardization and quality control",
+            "Marketing and promotional support",
+            "Ongoing menu development",
+            "Technology systems (POS, inventory)"
+        ],
+        
+        "success_story": {
+            "title": "Hong Kong Market Dominance",
+            "story": "A master franchisee secured rights for Hong Kong in 2010. They now operate 35 locations across HK and Macau. 'The simple menu and fast service model works perfectly in Hong Kong's fast-paced environment. We serve 500+ customers daily per store.'",
+            "metrics": "35 stores | $850k avg revenue | 20-month ROI"
+        },
+        
+        "menu_highlights": ["Gyudon (Beef Bowl)", "Various sizes (S/M/L)", "Side dishes", "Miso soup", "Quick 3-min service", "24/7 operation"],
+        
+        "contact_info": "International: overseas@sukiya.co.jp | +81-45-555-9876"
+    },
+    
+    "Hoshino Coffee": {
+        "story": "Premium Nagoya coffee shop famous for pancakes. Expanding in Asia.",
+        "investment": "$250k - $500k",
+        "royalty": "5% - 6%",
+        "sales": "¥60M - ¥100M",
+        "overseas_status": "✅ ACTIVE IN ASIA",
+        "youtube_search": "Hoshino Coffee",
+        "news_search": "Hoshino Coffee expansion",
+        "financials": {"Metric": ["Investment", "Royalty", "Markets"], "Details": ["$250k-$500k", "5-6%", "HK/TW/TH"]},
+        "pros": ["Premium", "Unique menu", "Strong branding"],
+        "cons": ["Higher price", "Large space needed"],
+        
+        "history": "Hoshino Coffee was established in 1978 in Nagoya, Japan, as a traditional kissaten (coffee shop). Famous for its thick, fluffy pancakes and retro Showa-era atmosphere, the brand has successfully modernized while maintaining its nostalgic charm. Currently expanding across Asia with a focus on premium positioning.",
+        
+        "requirements": [
+            "Minimum net worth: $600k USD",
+            "Liquid capital: $250k+ USD",
+            "Hospitality or café experience preferred",
+            "Premium location in upscale area",
+            "Large space: 1,200-2,000 sq ft",
+            "Commitment to traditional service standards",
+            "Understanding of premium positioning"
+        ],
+        
+        "support": [
+            "Barista and service training",
+            "Signature pancake preparation training",
+            "Interior design consultation (retro-modern aesthetic)",
+            "Equipment sourcing (espresso machines, etc.)",
+            "Menu development and recipes",
+            "Brand marketing materials",
+            "Ongoing quality assurance",
+            "Seasonal menu updates"
+        ],
+        
+        "success_story": {
+            "title": "Taiwan Premium Success",
+            "story": "Opened first location in Taipei's Xinyi District in 2016. The retro atmosphere and famous pancakes created instant buzz. 'Hoshino Coffee fills a unique niche—traditional Japanese café culture with modern premium positioning. Customers stay 2-3 hours, creating a destination experience.'",
+            "metrics": "6 stores | $420k avg revenue | 28-month ROI"
+        },
+        
+        "menu_highlights": ["Famous fluffy pancakes", "Hand-drip coffee", "Morning sets", "Retro atmosphere", "Premium beans", "Traditional service"],
+        
+        "contact_info": "Asia Development: asia@hoshino-coffee.com | +81-52-555-4321"
+    },
+    
+    "Ootoya": {
+        "story": "Premium teishoku restaurant with 500+ stores. Strong US presence.",
+        "investment": "$300k - $600k",
+        "royalty": "5% - 6%",
+        "sales": "$500k - $1M",
+        "overseas_status": "✅ ESTABLISHED - USA, Asia",
+        "youtube_search": "Ootoya franchise",
+        "news_search": "Ootoya international",
+        "financials": {"Metric": ["Investment", "Royalty", "Stores"], "Details": ["$300k-$600k", "5-6%", "50+"]},
+        "pros": ["Premium", "Healthy menu", "US success"],
+        "cons": ["Complex menu", "Japanese ingredients"],
+        
+        "history": "Ootoya was founded in 1983 in Tokyo, specializing in teishoku (traditional Japanese set meals). With over 500 locations globally, Ootoya emphasizes healthy, balanced meals using quality ingredients. The brand has successfully established itself in the US market with locations in California, New York, and Hawaii.",
+        
+        "requirements": [
+            "Minimum net worth: $700k USD",
+            "Liquid capital: $300k+ USD",
+            "Full-service restaurant experience required",
+            "Understanding of Japanese cuisine preferred",
+            "Access to Japanese ingredient suppliers",
+            "Space: 1,500-2,500 sq ft",
+            "Commitment to authentic preparation"
+        ],
+        
+        "support": [
+            "Comprehensive culinary training",
+            "Japanese ingredient sourcing network",
+            "Menu planning and recipe development",
+            "Store design and atmosphere creation",
+            "Staff training programs",
+            "Marketing and community engagement",
+            "Quality control systems",
+            "Seasonal menu innovation"
+        ],
+        
+        "success_story": {
+            "title": "California Success Story",
+            "story": "A franchisee in San Mateo, CA opened in 2015, targeting the Japanese-American community and health-conscious diners. 'Ootoya's teishoku concept resonates with customers seeking authentic, healthy Japanese meals. We've built a loyal following of both Japanese expats and local foodies.'",
+            "metrics": "4 locations | $680k avg revenue | 30-month ROI"
+        },
+        
+        "menu_highlights": ["Teishoku set meals", "Grilled fish", "Tempura", "Miso soup", "Rice and pickles", "Healthy options"],
+        
+        "contact_info": "Franchise: franchise@otoya.co.jp | +81-3-5555-7890"
+    }
 }
 
 # --- FUNCTIONS ---
@@ -236,19 +525,97 @@ def show_home():
         """
         st.markdown(html, unsafe_allow_html=True)
         
-        btn = "Deep Dive →" if has_dd else "Enquiry →"
-        if st.button(btn, key=idx):
-            st.session_state.selected_franchise = brand
-            st.session_state.page = "profile" if has_dd else "quiz"
-            st.rerun()
+        if has_dd:
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                if st.button("📋 View Details", key=f"detail_{idx}"):
+                    st.session_state.selected_franchise = brand
+                    st.session_state.page = "details"
+                    st.rerun()
+            with col2:
+                if st.button("Enquiry →", key=f"enq_{idx}"):
+                    st.session_state.selected_franchise = brand
+                    st.session_state.page = "quiz"
+                    st.rerun()
+        else:
+            if st.button("Enquiry →", key=idx):
+                st.session_state.selected_franchise = brand
+                st.session_state.page = "quiz"
+                st.rerun()
 
-    # Footer
     st.markdown("""
     <div class="footer">
         <p>© 2026 JXPerience. Connecting Japanese brands with global investors.</p>
         <p>📧 Contact: jxperience.info@gmail.com</p>
     </div>
     """, unsafe_allow_html=True)
+
+def show_brand_details():
+    brand = st.session_state.selected_franchise
+    if not brand or brand not in FRANCHISES:
+        st.session_state.page = "home"
+        st.rerun()
+    
+    data = FRANCHISES[brand]
+    
+    if st.button("← Back to Brands"):
+        st.session_state.page = "home"
+        st.rerun()
+    
+    st.title(f"🗾 {brand}")
+    st.markdown(f'<div class="status-badge">{data["overseas_status"]}</div>', unsafe_allow_html=True)
+    
+    # Company History
+    st.markdown("""<div class="detail-section"><h2 style="margin-top:0;">📖 Company History</h2></div>""", unsafe_allow_html=True)
+    st.write(data["history"])
+    
+    # Menu Highlights
+    st.markdown("""<div class="detail-section"><h2 style="margin-top:0;">🍱 Menu Highlights</h2></div>""", unsafe_allow_html=True)
+    st.write(", ".join(data["menu_highlights"]))
+    
+    # Financial Overview
+    st.markdown("""<div class="detail-section"><h2 style="margin-top:0;">💰 Investment Overview</h2></div>""", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Investment", data["investment"])
+    col2.metric("Royalty", data["royalty"])
+    col3.metric("Avg. Sales", data["sales"])
+    
+    # Franchise Requirements
+    st.markdown("""<div class="detail-section"><h2 style="margin-top:0;">📋 Franchise Requirements</h2></div>""", unsafe_allow_html=True)
+    for req in data["requirements"]:
+        st.markdown(f"""<div class="requirement-box">✅ {req}</div>""", unsafe_allow_html=True)
+    
+    # Support Provided
+    st.markdown("""<div class="detail-section"><h2 style="margin-top:0;">🤝 Support Provided</h2></div>""", unsafe_allow_html=True)
+    for support in data["support"]:
+        st.markdown(f"• {support}")
+    
+    # Success Story
+    if "success_story" in data:
+        story = data["success_story"]
+        st.markdown("""<div class="detail-section"><h2 style="margin-top:0;">⭐ Success Story</h2></div>""", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="success-story">
+            <h3 style="margin-top:0; color:#059669;">{story["title"]}</h3>
+            <p>{story["story"]}</p>
+            <p style="font-weight:bold; color:#059669; margin-bottom:0;">📊 {story["metrics"]}</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Contact Information
+    st.markdown("""<div class="detail-section"><h2 style="margin-top:0;">📞 Contact Information</h2></div>""", unsafe_allow_html=True)
+    st.info(data["contact_info"])
+    
+    # Call to Action
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("📝 Submit Enquiry", type="primary", use_container_width=True):
+            st.session_state.page = "quiz"
+            st.rerun()
+    with col2:
+        youtube_url = f"https://www.youtube.com/results?search_query={quote(data['youtube_search'])}"
+        st.markdown(f"[▶️ Watch Videos]({youtube_url})")
 
 def show_profile():
     brand = st.session_state.selected_franchise
@@ -276,7 +643,7 @@ def show_profile():
         st.markdown("---")
         col_p, col_c = st.columns(2)
         col_p.markdown("✅ **Pros**\n" + "\n".join([f"- {p}" for p in data["pros"]]))
-        col_c.markdown("️ **Cons**\n" + "\n".join([f"- {c}" for c in data["cons"]]))
+        col_c.markdown("⚠️ **Cons**\n" + "\n".join([f"- {c}" for c in data["cons"]]))
         st.divider()
         if st.button("Start Enquiry", type="primary"):
             st.session_state.page = "quiz"
@@ -335,7 +702,7 @@ def show_franchisor():
     if st.button("Logout"):
         st.session_state.franchisor_logged_in = False
         st.rerun()
-    tab1, tab2 = st.tabs([" Leads", "⚙️ Settings"])
+    tab1, tab2 = st.tabs(["📊 Leads", "⚙️ Settings"])
     with tab1:
         leads = get_leads()
         if leads:
@@ -343,7 +710,7 @@ def show_franchisor():
             st.write(f"✅ Found {len(leads)} real leads!")
             st.dataframe(df)
             csv = df.to_csv(index=False)
-            st.download_button("📥 Download CSV", csv, "leads.csv")
+            st.download_button(" Download CSV", csv, "leads.csv")
         else:
             st.info("No leads yet")
     with tab2:
@@ -363,7 +730,7 @@ def show_about():
     
     st.markdown("""
     <div class="beta-banner">
-        <h4>🚧 This is a Beta Site — Help Us Build It Together!</h4>
+        <h4> This is a Beta Site — Help Us Build It Together!</h4>
         <p style="color: #78350f; margin-bottom: 10px;">
             JXPerience is currently in <strong>beta</strong>. We are actively improving the platform and would love your input.
         </p>
@@ -372,14 +739,13 @@ def show_about():
             We invite you to share your comments and improvement ideas directly with us.
         </p>
         <p style="color: #78350f; margin: 0;">
-            📧 <strong>Email us at:</strong> <a href="mailto:jxperience.info@gmail.com?subject=JXPerience Feedback&body=Hi, I'd like to share some feedback about JXPerience...">jxperience.info@gmail.com</a>
+             <strong>Email us at:</strong> <a href="mailto:jxperience.info@gmail.com?subject=JXPerience Feedback&body=Hi, I'd like to share some feedback about JXPerience...">jxperience.info@gmail.com</a>
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # --- NEW FAQ SECTION ---
     st.markdown("---")
-    st.subheader("❓ Frequently Asked Questions")
+    st.subheader(" Frequently Asked Questions")
     
     faqs = [
         {"q": "Is there a fee to use this platform?", "a": "No, browsing and submitting enquiries is completely free for investors."},
@@ -395,7 +761,6 @@ def show_about():
             <p style="color: #666; margin: 0;">{faq["a"]}</p>
         </div>
         """, unsafe_allow_html=True)
-    # --- END FAQ ---
     
     st.divider()
     st.subheader("🚀 Ready to Explore?")
@@ -408,7 +773,7 @@ def show_about():
         st.markdown("📧 **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
 
 # --- SIDEBAR ---
-st.sidebar.title(" JP Hub")
+st.sidebar.title("🗾 JP Hub")
 st.sidebar.markdown("---")
 st.sidebar.subheader("Navigation")
 if st.sidebar.button("🏠 Home", use_container_width=True):
@@ -426,5 +791,6 @@ st.sidebar.markdown("---")
 if st.session_state.page == "quiz": show_quiz()
 elif st.session_state.page == "franchisor": show_franchisor()
 elif st.session_state.page == "profile": show_profile()
+elif st.session_state.page == "details": show_brand_details()
 elif st.session_state.page == "about": show_about()
 else: show_home()

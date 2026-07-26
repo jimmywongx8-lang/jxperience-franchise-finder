@@ -187,7 +187,7 @@ def show_home():
             margin: 0 0 15px 0;
             font-size: 2.5em;
             font-weight: 700;
-        '>🇯 Discover Japanese Franchise Opportunities</h1>
+        '>🗾 Discover Japanese Franchise Opportunities</h1>
         <p style='
             font-size: 1.3em; 
             margin: 0 0 20px 0; 
@@ -242,7 +242,7 @@ def show_home():
     st.subheader("Found 63 Expansion-Ready Brands")
     
     # Sidebar Filters
-    st.sidebar.subheader("🔍 Search & Filter")
+    st.sidebar.subheader(" Search & Filter")
     search = st.sidebar.text_input("Search brands", "")
     categories = st.session_state.get('categories', [])
     selected_cat = st.sidebar.multiselect("Filter by Category", categories, default=[])
@@ -288,7 +288,7 @@ def show_profile():
     
     if brand in FRANCHISES:
         data = FRANCHISES[brand]
-        st.title(f"🇯🇵 {brand}")
+        st.title(f"🗾 {brand}")
         st.success(f"**{data['overseas_status']}**")
         st.info(data["story"])
         
@@ -298,7 +298,7 @@ def show_profile():
         
         st.subheader("📰 News")
         news_url = f"https://www.google.com/search?q={quote(data['news_search'])}&tbm=nws"
-        st.markdown(f"[ Read News]({news_url})")
+        st.markdown(f"[📰 Read News]({news_url})")
         
         st.markdown("---")
         col1, col2, col3 = st.columns(3)
@@ -347,7 +347,7 @@ def show_quiz():
                 st.error("Fill in name and email")
 
 def show_franchisor():
-    st.title("🇵 Franchisor Portal")
+    st.title("🗾 Franchisor Portal")
     
     if not st.session_state.franchisor_logged_in:
         pwd = st.text_input("Password", type="password")
@@ -371,7 +371,7 @@ def show_franchisor():
         st.session_state.franchisor_logged_in = False
         st.rerun()
     
-    tab1, tab2 = st.tabs([" Leads", "⚙️ Settings"])
+    tab1, tab2 = st.tabs(["📊 Leads", "⚙️ Settings"])
     
     with tab1:
         leads = get_leads()
@@ -381,7 +381,7 @@ def show_franchisor():
             st.dataframe(df)
             
             csv = df.to_csv(index=False)
-            st.download_button("📥 Download CSV", csv, "leads.csv")
+            st.download_button(" Download CSV", csv, "leads.csv")
         else:
             st.info("No leads yet")
     
@@ -389,7 +389,7 @@ def show_franchisor():
         st.info("Settings coming soon")
 
 def show_about():
-    st.title("🇵 About JXPerience")
+    st.title("🗾 About JXPerience")
     st.caption("Our Mission & Story")
     
     st.markdown("---")
@@ -454,10 +454,10 @@ def show_about():
             st.session_state.page = 'home'
             st.rerun()
     with col_b:
-        st.markdown(" **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
+        st.markdown("📧 **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
 
 # --- SIDEBAR NAVIGATION ---
-st.sidebar.title("🇵 JP Hub")
+st.sidebar.title("🗾 JP Hub")
 st.sidebar.markdown("---")
 
 if st.sidebar.button("🏠 Home", use_container_width=True):
@@ -468,7 +468,7 @@ if st.sidebar.button("ℹ️ About Us", use_container_width=True):
     st.session_state.page = 'about'
     st.rerun()
 
-if st.sidebar.button("🏢 Franchisor", use_container_width=True):
+if st.sidebar.button(" Franchisor", use_container_width=True):
     st.session_state.page = 'franchisor'
     st.rerun()
 

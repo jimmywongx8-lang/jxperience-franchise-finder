@@ -23,7 +23,11 @@ if 'franchisor_logged_in' not in st.session_state:
 @st.cache_data(ttl=300)
 def load_brands():
     try:
-        return pd.read_csv(CSV_URL)
+        df = pd.read_csv(CSV_URL)
+        # Get unique categories for sidebar
+        categories = df['category'].dropna().unique().tolist()
+        st.session_state.categories = categories
+        return df
     except:
         return pd.DataFrame()
 
@@ -158,18 +162,25 @@ def show_home():
     
     st.subheader(f"Found {len(df)} Expansion-Ready Brands")
     
-    search = st.text_input("🔍 Search")
-    categories = df['category'].dropna().unique().tolist() if 'category' in df.columns else []
-    selected_cat = st.multiselect("Filter", categories)
+    # Add search bar at top of page
+    search = st.text_input("🔍 Search by brand name, category, or keyword", "", key="search_input")
     
+    # Filter by category (moved to sidebar)
+    categories = st.session_state.get('categories', [])
+    selected_cat = st.multiselect("Filter by Category", categories, default=[], key="cat_filter")
+    
+    # Apply filters
     filtered = df.copy()
     if search:
-        filtered = filtered[filtered['brand_name'].str.contains(search, case=False, na=False)]
+        filtered = filtered[filtered['brand_name'].str.contains(search, case=False, na=False) |
+                          filtered['category'].str.contains(search, case=False, na=False) |
+                          filtered['story'].str.contains(search, case=False, na=False)]
     if selected_cat:
         filtered = filtered[filtered['category'].isin(selected_cat)]
     
     st.write(f"Showing {len(filtered)} brands")
     
+    # Display table with clickable rows
     for idx, row in filtered.iterrows():
         brand = row.get('brand_name', 'Unknown')
         has_dd = brand in FRANCHISES
@@ -308,6 +319,21 @@ if st.sidebar.button("🏠 Home"):
 if st.sidebar.button(" Franchisor"):
     st.session_state.page = 'franchisor'
     st.rerun()
+
+# Add category selector to sidebar
+if 'categories' in st.session_state:
+    st.sidebar.subheader("Filter by Category")
+    selected_cats = st.sidebar.multiselect(
+        "Select categories", 
+        st.session_state.categories,
+        default=st.session_state.categories
+    )
+    st.session_state.selected_cats = selected_cats
+
+# Add search bar to sidebar
+st.sidebar.subheader("Search")
+search_term = st.sidebar.text_input("Search brands", "")
+st.session_state.search_term = search_term
 
 if st.session_state.page == 'quiz':
     show_quiz()

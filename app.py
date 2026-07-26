@@ -49,27 +49,6 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     
-    /* Sidebar styling */
-    .css-1d391kg {
-        background-color: #ffffff;
-    }
-    
-    /* Card styling for franchises */
-    .franchise-card {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-left: 4px solid #667eea;
-        transition: all 0.3s ease;
-    }
-    
-    .franchise-card:hover {
-        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-        transform: translateY(-2px);
-    }
-    
     /* Metric cards */
     .metric-card {
         background: rgba(255,255,255,0.2);
@@ -311,7 +290,7 @@ def show_home():
     st.subheader("Found 63 Expansion-Ready Brands")
     
     # Sidebar Filters
-    st.sidebar.subheader("🔍 Search & Filter")
+    st.sidebar.subheader(" Search & Filter")
     search = st.sidebar.text_input("Search brands", "")
     categories = st.session_state.get('categories', [])
     selected_cat = st.sidebar.multiselect("Filter by Category", categories, default=[])
@@ -326,29 +305,26 @@ def show_home():
     
     st.write(f"Showing {len(filtered)} brands")
     
-    # Display brands with CARD LAYOUT
+    # Display brands with Streamlit native container (FIXED)
     for idx, row in filtered.iterrows():
         brand = row.get('brand_name', 'Unknown')
         has_dd = brand in FRANCHISES
         
-        st.markdown(f"""
-        <div class='franchise-card'>
-        """, unsafe_allow_html=True)
-        
-        col1, col2, col3 = st.columns([3, 2, 1])
-        with col1:
-            st.markdown(f"**{brand}**")
-            st.caption(f"{row.get('category', '')} | {row.get('stores_japan', '')} stores")
-        with col2:
-            st.caption(f"${row.get('investment_usd', '')} | Royalty: {row.get('royalty_pct', '')}%")
-        with col3:
-            btn = "Deep Dive →" if has_dd else "Apply →"
-            if st.button(btn, key=idx):
-                st.session_state.selected_franchise = brand
-                st.session_state.page = 'profile' if has_dd else 'quiz'
-                st.rerun()
-        
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container():
+            col1, col2, col3 = st.columns([3, 2, 1])
+            with col1:
+                st.markdown(f"**{brand}**")
+                st.caption(f"{row.get('category', '')} | {row.get('stores_japan', '')} stores")
+            with col2:
+                st.caption(f"${row.get('investment_usd', '')} | Royalty: {row.get('royalty_pct', '')}%")
+            with col3:
+                btn = "Deep Dive →" if has_dd else "Apply →"
+                if st.button(btn, key=idx):
+                    st.session_state.selected_franchise = brand
+                    st.session_state.page = 'profile' if has_dd else 'quiz'
+                    st.rerun()
+            
+            st.markdown("---")
 
 def show_profile():
     brand = st.session_state.selected_franchise
@@ -379,7 +355,7 @@ def show_profile():
         
         st.subheader("📰 News")
         news_url = f"https://www.google.com/search?q={quote(data['news_search'])}&tbm=nws"
-        st.markdown(f"[ Read News]({news_url})")
+        st.markdown(f"[📰 Read News]({news_url})")
         
         st.markdown("---")
         col1, col2, col3 = st.columns(3)
@@ -560,7 +536,7 @@ def show_about():
     
     As a personal project, I started JXPerience to:
     
-    1. ** Aggregate Information** - Bring together comprehensive data on Japanese franchises, 
+    1. **📊 Aggregate Information** - Bring together comprehensive data on Japanese franchises, 
        from well-known brands to emerging opportunities
     
     2. **🤝 Connect Investors** - Help serious global investors discover and connect with authentic 
@@ -569,7 +545,7 @@ def show_about():
     3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine 
        and culture
     
-    4. ** Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, 
+    4. **🍱 Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, 
        fostering deeper understanding and appreciation of Japanese culture
     
     ### The Vision
@@ -610,7 +586,7 @@ if st.sidebar.button("ℹ️ About Us", use_container_width=True):
     st.session_state.page = 'about'
     st.rerun()
 
-if st.sidebar.button(" Franchisor", use_container_width=True):
+if st.sidebar.button("🏢 Franchisor", use_container_width=True):
     st.session_state.page = 'franchisor'
     st.rerun()
 

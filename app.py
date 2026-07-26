@@ -21,7 +21,7 @@ if 'franchisor_logged_in' not in st.session_state:
 if 'categories' not in st.session_state:
     st.session_state.categories = []
 
-# --- CUSTOM CSS (ENHANCED WITH LOGO FALLBACK) ---
+# --- CUSTOM CSS ---
 st.markdown("""
 <style>
     .main { background-color: #f8f9fa; }
@@ -36,7 +36,6 @@ st.markdown("""
     .benefit-card { background: #f0f7ff; border-left: 4px solid #667eea; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
     .benefit-card h4 { color: #1a1a2e; margin-top: 0; }
     
-    /* Brand card styling */
     .brand-row {
         display: flex;
         align-items: center;
@@ -49,7 +48,6 @@ st.markdown("""
     }
     .brand-row:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); transform: translateY(-2px); }
     
-    /* LOGO WRAPPER WITH FALLBACK */
     .brand-logo-wrapper {
         position: relative;
         width: 60px;
@@ -85,9 +83,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- LOAD 63 BRANDS ---
+# --- LOAD BRANDS ---
 def extract_domain(url):
-    """Extract clean domain from URL"""
     if pd.isna(url) or not url:
         return ""
     try:
@@ -102,67 +99,22 @@ def load_brands():
         df = pd.read_csv(CSV_URL)
         if 'category' in df.columns:
             st.session_state.categories = df['category'].dropna().unique().tolist()
-        
-        # Extract domain and generate Google Favicon URL (Very reliable)
         if 'website' in df.columns:
             df['domain'] = df['website'].apply(extract_domain)
             df['logo_url'] = df['domain'].apply(lambda d: f"https://www.google.com/s2/favicons?domain={d}&sz=128" if d else "")
-        
         return df
     except Exception as e:
         st.error(f"Error loading data: {e}")
         return pd.DataFrame()
 
-# --- 6 DEEP DIVE PROFILES ---
+# --- FRANCHISES ---
 FRANCHISES = {
-    "Coco Ichibanya": {
-        "story": "Japan's #1 curry house with 1,300+ stores. Aggressively expanding overseas.",
-        "investment": "$150k - $300k", "royalty": "5% - 7%", "sales": "¥50M - ¥80M",
-        "overseas_status": "✅ ACTIVELY RECRUITING - USA, Asia, Europe",
-        "youtube_search": "Coco Ichibanya franchise overseas", "news_search": "Coco Ichibanya international expansion",
-        "financials": {"Metric": ["Franchise Fee", "Total Investment", "Royalty", "Store Count"], "Details": ["¥3M - ¥5M", "$150k - $300k", "5% - 7%", "1,300+ stores"]},
-        "pros": ["Proven overseas success", "Low complexity", "Customizable menu"], "cons": ["Curry specialization", "Competition in Asia"]
-    },
-    "Pepper Lunch": {
-        "story": "Fast-steak concept with 200+ stores across 15+ countries. Highly successful internationally.",
-        "investment": "$200k - $400k", "royalty": "5% - 6%", "sales": "$400k - $800k",
-        "overseas_status": "✅ VERY ACTIVE - 15+ countries",
-        "youtube_search": "Pepper Lunch franchise", "news_search": "Pepper Lunch global expansion",
-        "financials": {"Metric": ["Franchise Fee", "Investment", "Royalty", "Global Stores"], "Details": ["$30k-$50k", "$200k-$400k", "5%-6%", "200+ stores"]},
-        "pros": ["Proven success", "DIY concept", "Fast service"], "cons": ["Sizzling equipment", "Premium pricing"]
-    },
-    "Kura Sushi": {
-        "story": "High-tech conveyor belt sushi expanding aggressively in USA.",
-        "investment": "$500k - $1M", "royalty": "5% - 6%", "sales": "$1M - $2M",
-        "overseas_status": "✅ EXPANDING IN USA",
-        "youtube_search": "Kura Sushi USA", "news_search": "Kura Sushi USA expansion",
-        "financials": {"Metric": ["Investment", "Royalty", "US Locations"], "Details": ["$500k-$1M", "5%-6%", "10+ locations"]},
-        "pros": ["High-tech", "Strong US growth", "Premium"], "cons": ["High investment", "Complex operations"]
-    },
-    "Sukiya": {
-        "story": "Japan's largest gyudon chain with 2,000+ stores. Expanding in Asia.",
-        "investment": "$300k - $600k", "royalty": "4% - 6%", "sales": "¥100M+",
-        "overseas_status": "✅ SELECTIVE - Asia focus",
-        "youtube_search": "Sukiya franchise Asia", "news_search": "Sukiya international expansion",
-        "financials": {"Metric": ["Investment", "Royalty", "Global Stores"], "Details": ["$300k-$600k", "4%-6%", "2,000+ stores"]},
-        "pros": ["Massive brand", "Simple menu", "High volume"], "cons": ["Selective approval", "Beef regulations"]
-    },
-    "Hoshino Coffee": {
-        "story": "Premium Nagoya coffee shop famous for pancakes. Expanding in Asia.",
-        "investment": "$250k - $500k", "royalty": "5% - 6%", "sales": "¥60M - ¥100M",
-        "overseas_status": "✅ ACTIVE IN ASIA",
-        "youtube_search": "Hoshino Coffee Asia", "news_search": "Hoshino Coffee expansion",
-        "financials": {"Metric": ["Investment", "Royalty", "Markets"], "Details": ["$250k-$500k", "5%-6%", "HK/TW/TH"]},
-        "pros": ["Premium", "Unique menu", "Strong branding"], "cons": ["Higher price", "Large space needed"]
-    },
-    "Ootoya": {
-        "story": "Premium teishoku restaurant with 500+ stores. Strong US presence.",
-        "investment": "$300k - $600k", "royalty": "5% - 6%", "sales": "$500k - $1M",
-        "overseas_status": "✅ ESTABLISHED - USA, Asia",
-        "youtube_search": "Ootoya franchise USA", "news_search": "Ootoya international",
-        "financials": {"Metric": ["Investment", "Royalty", "Overseas"], "Details": ["$300k-$600k", "5%-6%", "50+ stores"]},
-        "pros": ["Premium", "Healthy menu", "US success"], "cons": ["Complex menu", "Japanese ingredients"]
-    }
+    "Coco Ichibanya": {"story": "Japan's #1 curry house with 1,300+ stores.", "investment": "$150k - $300k", "royalty": "5% - 7%", "sales": "¥50M - ¥80M", "overseas_status": "✅ ACTIVELY RECRUITING", "youtube_search": "Coco Ichibanya franchise", "news_search": "Coco Ichibanya expansion", "financials": {"Metric": ["Fee", "Investment", "Royalty", "Stores"], "Details": ["¥3M-¥5M", "$150k-$300k", "5-7%", "1,300+"]}, "pros": ["Proven success", "Low complexity"], "cons": ["Curry specialization"]},
+    "Pepper Lunch": {"story": "Fast-steak concept with 200+ stores across 15+ countries.", "investment": "$200k - $400k", "royalty": "5% - 6%", "sales": "$400k - $800k", "overseas_status": "✅ VERY ACTIVE", "youtube_search": "Pepper Lunch franchise", "news_search": "Pepper Lunch expansion", "financials": {"Metric": ["Fee", "Investment", "Royalty", "Stores"], "Details": ["$30k-$50k", "$200k-$400k", "5-6%", "200+"]}, "pros": ["Proven success", "DIY concept"], "cons": ["Premium pricing"]},
+    "Kura Sushi": {"story": "High-tech conveyor belt sushi expanding in USA.", "investment": "$500k - $1M", "royalty": "5% - 6%", "sales": "$1M - $2M", "overseas_status": "✅ EXPANDING IN USA", "youtube_search": "Kura Sushi USA", "news_search": "Kura Sushi expansion", "financials": {"Metric": ["Investment", "Royalty", "Locations"], "Details": ["$500k-$1M", "5-6%", "10+"]}, "pros": ["High-tech", "Strong growth"], "cons": ["High investment"]},
+    "Sukiya": {"story": "Japan's largest gyudon chain with 2,000+ stores.", "investment": "$300k - $600k", "royalty": "4% - 6%", "sales": "¥100M+", "overseas_status": "✅ SELECTIVE", "youtube_search": "Sukiya franchise", "news_search": "Sukiya expansion", "financials": {"Metric": ["Investment", "Royalty", "Stores"], "Details": ["$300k-$600k", "4-6%", "2,000+"]}, "pros": ["Massive brand", "Simple menu"], "cons": ["Selective approval"]},
+    "Hoshino Coffee": {"story": "Premium Nagoya coffee shop famous for pancakes.", "investment": "$250k - $500k", "royalty": "5% - 6%", "sales": "¥60M - ¥100M", "overseas_status": "✅ ACTIVE IN ASIA", "youtube_search": "Hoshino Coffee", "news_search": "Hoshino Coffee expansion", "financials": {"Metric": ["Investment", "Royalty", "Markets"], "Details": ["$250k-$500k", "5-6%", "HK/TW/TH"]}, "pros": ["Premium", "Unique menu"], "cons": ["Higher price"]},
+    "Ootoya": {"story": "Premium teishoku restaurant with 500+ stores.", "investment": "$300k - $600k", "royalty": "5% - 6%", "sales": "$500k - $1M", "overseas_status": "✅ ESTABLISHED", "youtube_search": "Ootoya franchise", "news_search": "Ootoya international", "financials": {"Metric": ["Investment", "Royalty", "Stores"], "Details": ["$300k-$600k", "5-6%", "50+"]}, "pros": ["Premium", "Healthy menu"], "cons": ["Complex menu"]}
 }
 
 # --- FUNCTIONS ---
@@ -199,15 +151,14 @@ def get_leads():
 
 # --- PAGES ---
 def show_home():
-    # === HERO SECTION ===
     st.markdown("""
-    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 50px 30px; border-radius: 15px; color: white; margin-bottom: 30px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);'>
-        <h1 style='color: white; margin: 0 0 15px 0; font-size: 2.5em; font-weight: 700;'>🗾 Discover Japanese Franchise Opportunities</h1>
-        <p style='font-size: 1.3em; margin: 0 0 20px 0; opacity: 0.95;'>Connecting global investors with 63+ expansion-ready Japanese brands</p>
-        <div style='display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 25px;'>
-            <div class='metric-card'><div style='font-size: 2em; font-weight: bold;'>63+</div><div style='font-size: 0.9em; opacity: 0.9;'>Brands</div></div>
-            <div class='metric-card'><div style='font-size: 2em; font-weight: bold;'>15+</div><div style='font-size: 0.9em; opacity: 0.9;'>Countries</div></div>
-            <div class='metric-card'><div style='font-size: 2em; font-weight: bold;'>$100k+</div><div style='font-size: 0.9em; opacity: 0.9;'>Investment</div></div>
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 50px 30px; border-radius: 15px; color: white; margin-bottom: 30px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+        <h1 style="color: white; margin: 0 0 15px 0; font-size: 2.5em; font-weight: 700;">🗾 Discover Japanese Franchise Opportunities</h1>
+        <p style="font-size: 1.3em; margin: 0 0 20px 0; opacity: 0.95;">Connecting global investors with 63+ expansion-ready Japanese brands</p>
+        <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 25px;">
+            <div class="metric-card"><div style="font-size: 2em; font-weight: bold;">63+</div><div style="font-size: 0.9em; opacity: 0.9;">Brands</div></div>
+            <div class="metric-card"><div style="font-size: 2em; font-weight: bold;">15+</div><div style="font-size: 0.9em; opacity: 0.9;">Countries</div></div>
+            <div class="metric-card"><div style="font-size: 2em; font-weight: bold;">$100k+</div><div style="font-size: 0.9em; opacity: 0.9;">Investment</div></div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -232,34 +183,34 @@ def show_home():
     
     st.write(f"Showing {len(filtered)} brands")
     
-    # Display brands with LOGOS and FALLBACK
     for idx, row in filtered.iterrows():
         brand = row.get('brand_name', 'Unknown')
         has_dd = brand in FRANCHISES
         logo_url = row.get('logo_url', '')
         first_letter = brand[0].upper() if brand else "?"
+        category = row.get('category', '')
+        stores = row.get('stores_japan', '')
+        investment = row.get('investment_usd', '')
+        royalty = row.get('royalty_pct', '')
         
-        # Build HTML with fallback letter behind the image
-        logo_html = f"""
-        <div class='brand-logo-wrapper'>
-            {first_letter}
-            <img src='{logo_url}' class='brand-logo-img'>
+        # Build HTML with double quotes to avoid conflicts
+        html = f"""
+        <div class="brand-row">
+            <div class="brand-logo-wrapper">
+                {first_letter}
+                <img src="{logo_url}" class="brand-logo-img">
+            </div>
+            <div class="brand-info">
+                <p class="brand-name">{brand}</p>
+                <p class="brand-category">{category} | {stores} stores</p>
+            </div>
+            <div class="brand-stats">
+                <p class="brand-investment">${investment}</p>
+                <p class="brand-royalty">Royalty: {royalty}%</p>
+            </div>
         </div>
         """
-        
-        st.markdown(f"""
-        <div class='brand-row'>
-            {logo_html}
-            <div class='brand-info'>
-                <p class='brand-name'>{brand}</p>
-                <p class='brand-category'>{row.get('category', '')} | {row.get('stores_japan', '')} stores</p>
-            </div>
-            <div class='brand-stats'>
-                <p class='brand-investment'>${row.get('investment_usd', '')}</p>
-                <p class='brand-royalty'>Royalty: {row.get('royalty_pct', '')}%</p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(html, unsafe_allow_html=True)
         
         btn = "Deep Dive →" if has_dd else "Apply →"
         if st.button(btn, key=idx):
@@ -278,12 +229,12 @@ def show_profile():
     if brand in FRANCHISES:
         data = FRANCHISES[brand]
         st.title(f"🗾 {brand}")
-        st.markdown(f"<div class='status-badge'>{data['overseas_status']}</div>", unsafe_allow_html=True)
+        st.markdown(f'<div class="status-badge">{data["overseas_status"]}</div>', unsafe_allow_html=True)
         st.info(data["story"])
         st.subheader("📺 Watch")
-        st.markdown(f"[▶️ Watch Videos](https://www.youtube.com/results?search_query={quote(data['youtube_search'])})")
+        st.markdown(f'[▶️ Watch Videos](https://www.youtube.com/results?search_query={quote(data["youtube_search"])})')
         st.subheader("📰 News")
-        st.markdown(f"[📰 Read News](https://www.google.com/search?q={quote(data['news_search'])}&tbm=nws)")
+        st.markdown(f'[📰 Read News](https://www.google.com/search?q={quote(data["news_search"])}&tbm=nws)')
         st.markdown("---")
         col1, col2, col3 = st.columns(3)
         col1.metric("Investment", data["investment"])
@@ -325,12 +276,12 @@ def show_quiz():
                 st.error("Fill in name and email")
 
 def show_franchisor():
-    st.title(" Franchisor Portal")
-    st.markdown("<div style='margin-bottom: 25px;'><h3 style='color: #1a1a2e; margin-top: 0;'>Why Register as a Franchisor?</h3><p style='font-size: 1.1em; line-height: 1.6;'>As a Japanese franchise brand, you have unique access to the global market. Our platform connects you directly with qualified international investors.</p></div>", unsafe_allow_html=True)
-    st.markdown("<div class='benefit-card'><h4>✅ What You'll Get as a Verified Partner</h4><ul style='padding-left: 20px; margin: 15px 0;'><li><strong>Real-time qualified leads</strong> - See genuine investor applications as they come in</li><li><strong>Pre-screened investors</strong> - All applicants are vetted for serious investment capacity</li><li><strong>Dedicated dashboard</strong> - Track your leads and review applications in one place</li><li><strong>CSV export</strong> - Download your leads in spreadsheet format</li><li><strong>Direct connection</strong> - Contact investors directly through our secure platform</li></ul></div>", unsafe_allow_html=True)
+    st.title("🗾 Franchisor Portal")
+    st.markdown('<div style="margin-bottom: 25px;"><h3 style="color: #1a1a2e; margin-top: 0;">Why Register as a Franchisor?</h3><p style="font-size: 1.1em; line-height: 1.6;">As a Japanese franchise brand, you have unique access to the global market. Our platform connects you directly with qualified international investors.</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="benefit-card"><h4>✅ What You\'ll Get as a Verified Partner</h4><ul style="padding-left: 20px; margin: 15px 0;"><li><strong>Real-time qualified leads</strong> - See genuine investor applications as they come in</li><li><strong>Pre-screened investors</strong> - All applicants are vetted for serious investment capacity</li><li><strong>Dedicated dashboard</strong> - Track your leads and review applications in one place</li><li><strong>CSV export</strong> - Download your leads in spreadsheet format</li><li><strong>Direct connection</strong> - Contact investors directly through our secure platform</li></ul></div>', unsafe_allow_html=True)
     
     if not st.session_state.franchisor_logged_in:
-        st.markdown("<div style='margin-bottom: 25px;'><h3 style='color: #1a1a2e; margin-top: 0;'>Access Your Franchise Dashboard</h3><p style='font-size: 1.1em; line-height: 1.6;'>If your brand is already approved as a partner, enter your access code to see your leads.<br><br><strong>Not sure if you're approved?</strong> Check your email for the access code, or <strong>request access</strong> below if you're a new franchise brand.</p></div>", unsafe_allow_html=True)
+        st.markdown('<div style="margin-bottom: 25px;"><h3 style="color: #1a1a2e; margin-top: 0;">Access Your Franchise Dashboard</h3><p style="font-size: 1.1em; line-height: 1.6;">If your brand is already approved as a partner, enter your access code to see your leads.<br><br><strong>Not sure if you\'re approved?</strong> Check your email for the access code, or <strong>request access</strong> below if you\'re a new franchise brand.</p></div>', unsafe_allow_html=True)
         pwd = st.text_input("Password", type="password")
         if st.button("Login"):
             if pwd == "jfa2026":
@@ -338,11 +289,11 @@ def show_franchisor():
                 st.rerun()
             else:
                 st.error("Wrong password")
-        st.markdown("<div style='margin-top: 30px;'><h3 style='color: #1a1a2e; margin-top: 0;'>New to JXPerience?</h3><p style='font-size: 1.1em; line-height: 1.6;'>If you're a Japanese franchise brand looking to expand internationally, you can request access to our platform.</p></div>", unsafe_allow_html=True)
+        st.markdown('<div style="margin-top: 30px;"><h3 style="color: #1a1a2e; margin-top: 0;">New to JXPerience?</h3><p style="font-size: 1.1em; line-height: 1.6;">If you\'re a Japanese franchise brand looking to expand internationally, you can request access to our platform.</p></div>', unsafe_allow_html=True)
         with st.form("request"):
             company = st.text_input("Company")
             email = st.text_input("Email")
-            st.markdown("<p style='font-size: 0.9em; color: #666;'>By submitting this form, you'll receive:<ul style='padding-left: 20px; margin-top: 10px;'><li>Confirmation of your request</li><li>Review of your brand's expansion readiness</li><li>Access code within 24-48 hours</li></ul></p>", unsafe_allow_html=True)
+            st.markdown('<p style="font-size: 0.9em; color: #666;">By submitting this form, you\'ll receive:<ul style="padding-left: 20px; margin-top: 10px;"><li>Confirmation of your request</li><li>Review of your brand\'s expansion readiness</li><li>Access code within 24-48 hours</li></ul></p>', unsafe_allow_html=True)
             if st.form_submit_button("Request Access"):
                 send_email("Partner Request", f"{company}: {email}")
                 st.success("Request sent! We'll contact you within 24-48 hours.")
@@ -378,23 +329,23 @@ def show_about():
     with col3: st.metric("Growth Period", "~18 years", "JETRO Data")
     st.markdown("This **8x growth** in less than two decades is unprecedented in global food culture history.\n\n### Our Mission\n\nAs a personal project, I started JXPerience to:\n\n1. **📊 Aggregate Information** - Bring together comprehensive data on Japanese franchises, from well-known brands to emerging opportunities\n2. **🤝 Connect Investors** - Help serious global investors discover and connect with authentic Japanese franchise opportunities\n3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine and culture\n4. **🍱 Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, fostering deeper understanding and appreciation of Japanese culture\n\n### The Vision\n\nBy making franchise information more accessible, we hope to:\n- Support more people in discovering authentic Japanese cuisine\n- Facilitate meaningful cultural exchanges through food\n- Create shared experiences that bring people together\n- Help Japanese brands find the right partners for global expansion\n\n---\n\n*This platform is a labor of love, built to support the continued growth and appreciation of Japanese culinary excellence worldwide.*")
     st.divider()
-    st.subheader(" Ready to Explore?")
+    st.subheader("🚀 Ready to Explore?")
     col_a, col_b = st.columns(2)
     with col_a:
         if st.button("Browse Franchises", use_container_width=True):
             st.session_state.page = 'home'
             st.rerun()
     with col_b:
-        st.markdown(" **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
+        st.markdown("📧 **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
 
-# --- SIDEBAR NAVIGATION ---
-st.sidebar.title(" JP Hub")
+# --- SIDEBAR ---
+st.sidebar.title("🗾 JP Hub")
 st.sidebar.markdown("---")
 st.sidebar.subheader("Navigation")
 if st.sidebar.button("🏠 Home", use_container_width=True):
     st.session_state.page = 'home'
     st.rerun()
-if st.sidebar.button("️ About Us", use_container_width=True):
+if st.sidebar.button("ℹ️ About Us", use_container_width=True):
     st.session_state.page = 'about'
     st.rerun()
 if st.sidebar.button("🏢 Franchisor", use_container_width=True):
@@ -402,7 +353,7 @@ if st.sidebar.button("🏢 Franchisor", use_container_width=True):
     st.rerun()
 st.sidebar.markdown("---")
 
-# --- MAIN ROUTER ---
+# --- ROUTER ---
 if st.session_state.page == 'quiz': show_quiz()
 elif st.session_state.page == 'franchisor': show_franchisor()
 elif st.session_state.page == 'profile': show_profile()

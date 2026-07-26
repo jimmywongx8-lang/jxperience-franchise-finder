@@ -153,8 +153,99 @@ def load_brands():
         st.error(f"Error loading data: {e}")
         return pd.DataFrame()
 
-# --- EXPANDED FRANCHISE DETAILS ---
+# --- EXPANDED FRANCHISE DETAILS (NOW INCLUDES YOSHINOYA & SUSHIRO) ---
 FRANCHISES = {
+    "Yoshinoya": {
+        "story": "World-famous gyudon chain with 1,000+ stores in Japan and 200+ overseas.",
+        "investment": "$150k - $300k",
+        "royalty": "5.0%",
+        "sales": "$400k - $800k",
+        "overseas_status": "✅ ACTIVELY RECRUITING - USA, Asia, Middle East",
+        "youtube_search": "Yoshinoya franchise",
+        "news_search": "Yoshinoya expansion",
+        "financials": {"Metric": ["Franchise Fee", "Total Investment", "Royalty", "Store Count"], "Details": ["$30k-$50k", "$150k-$300k", "5%", "1,000+"]},
+        "pros": ["Global brand recognition", "Simple menu", "Fast service model", "Strong supply chain"],
+        "cons": ["Beef import regulations", "High competition", "Thin margins"],
+        
+        "history": "Founded in 1899 in Tokyo's fish market, Yoshinoya is one of Japan's oldest and most iconic fast-food chains. Specializing in gyudon (beef bowls), the company has grown to over 1,200 locations worldwide. Known for speed, affordability, and consistent quality, Yoshinoya has successfully expanded to the USA, China, Southeast Asia, and the Middle East.",
+        
+        "requirements": [
+            "Minimum net worth: $400k USD",
+            "Liquid capital: $150k+ USD",
+            "Restaurant or retail management experience preferred",
+            "Ability to operate fast-service model",
+            "Understanding of import regulations for beef",
+            "Suitable location: 800-1,500 sq ft in high-traffic area"
+        ],
+        
+        "support": [
+            "Initial training program (2-4 weeks)",
+            "Site selection assistance",
+            "Store design and equipment package",
+            "Supply chain establishment for beef",
+            "Recipe standardization",
+            "Marketing and promotional support",
+            "Ongoing operational consulting",
+            "Technology systems (POS, inventory)"
+        ],
+        
+        "success_story": {
+            "title": "California Success",
+            "story": "A franchisee in Los Angeles opened their first Yoshinoya in 2018. The simple menu and fast service attracted busy professionals and students. 'The gyudon concept resonates with health-conscious Americans looking for quick, affordable Japanese food. We serve 400+ customers daily.'",
+            "metrics": "5 locations | $520k avg revenue | 22-month ROI"
+        },
+        
+        "menu_highlights": ["Gyudon (Beef Bowl)", "Chicken Teriyaki", "Karaage (Fried Chicken)", "Miso Soup", "Quick service", "Value meals"],
+        
+        "contact_info": "International Franchise: overseas@yoshinoya.com | +81-3-5555-1111"
+    },
+    
+    "Sushiro": {
+        "story": "Japan's #1 conveyor belt sushi chain with 600+ stores.",
+        "investment": "$200k - $500k",
+        "royalty": "6.0%",
+        "sales": "$600k - $1.2M",
+        "overseas_status": "✅ EXPANDING - Asia, USA",
+        "youtube_search": "Sushiro franchise",
+        "news_search": "Sushiro expansion",
+        "financials": {"Metric": ["Franchise Fee", "Investment", "Royalty", "Global Stores"], "Details": ["$50k-$80k", "$200k-$500k", "6%", "600+"]},
+        "pros": ["Market leader", "High volume", "Fresh fish supply chain", "Technology integration"],
+        "cons": ["Higher investment", "Complex operations", "Fresh seafood handling"],
+        
+        "history": "Sushiro (formerly Akindo Sushiro) was established in 1995 and has become Japan's largest conveyor belt sushi chain. Known for high-quality sushi at affordable prices, advanced ordering technology, and efficient operations. The company operates 600+ stores across Japan and is rapidly expanding in Asia and the USA.",
+        
+        "requirements": [
+            "Minimum net worth: $800k USD",
+            "Liquid capital: $250k+ USD",
+            "Restaurant experience required",
+            "Understanding of seafood handling and freshness standards",
+            "Ability to manage 20-30 staff members",
+            "Large space: 2,000-3,500 sq ft",
+            "Commitment to quality and freshness"
+        ],
+        
+        "support": [
+            "Comprehensive sushi chef training",
+            "Conveyor belt system installation",
+            "Fresh fish supply chain network",
+            "Technology systems (touch-screen ordering)",
+            "Store design and layout",
+            "Quality control systems",
+            "Marketing support",
+            "Ongoing menu development"
+        ],
+        
+        "success_story": {
+            "title": "Hong Kong Expansion",
+            "story": "A master franchisee secured Hong Kong rights in 2018. They now operate 15 locations across HK. 'Sushiro's combination of quality, technology, and affordability is perfect for Hong Kong's competitive F&B market. Average wait time: 45 minutes during peak hours.'",
+            "metrics": "15 stores | $850k avg revenue | 26-month ROI"
+        },
+        
+        "menu_highlights": ["Conveyor belt sushi", "Fresh fish daily", "Touch-screen ordering", "Seasonal specialties", "Premium selections", "Family sets"],
+        
+        "contact_info": "Franchise Development: franchise@sushiro.co.jp | +81-6-5555-2222"
+    },
+    
     "Coco Ichibanya": {
         "story": "Japan's #1 curry house with 1,300+ stores. Aggressively expanding overseas.",
         "investment": "$150k - $300k",
@@ -167,7 +258,6 @@ FRANCHISES = {
         "pros": ["Proven overseas success", "Low complexity", "Customizable menu"],
         "cons": ["Curry specialization", "Competition in Asia"],
         
-        # NEW DETAILED INFO
         "history": "Founded in 1978 in Ichinomiya, Aichi Prefecture, Coco Ichibanya (CoCo壱番屋) started as a small family restaurant. The company revolutionized Japanese curry by offering customizable spice levels and toppings. Today, it operates over 1,300 stores in Japan and 200+ internationally, making it the world's largest curry house chain.",
         
         "requirements": [
@@ -566,7 +656,7 @@ def show_brand_details():
     st.markdown(f'<div class="status-badge">{data["overseas_status"]}</div>', unsafe_allow_html=True)
     
     # Company History
-    st.markdown("""<div class="detail-section"><h2 style="margin-top:0;">📖 Company History</h2></div>""", unsafe_allow_html=True)
+    st.markdown("""<div class="detail-section"><h2 style="margin-top:0;"> Company History</h2></div>""", unsafe_allow_html=True)
     st.write(data["history"])
     
     # Menu Highlights
@@ -586,7 +676,7 @@ def show_brand_details():
         st.markdown(f"""<div class="requirement-box">✅ {req}</div>""", unsafe_allow_html=True)
     
     # Support Provided
-    st.markdown("""<div class="detail-section"><h2 style="margin-top:0;">🤝 Support Provided</h2></div>""", unsafe_allow_html=True)
+    st.markdown("""<div class="detail-section"><h2 style="margin-top:0;"> Support Provided</h2></div>""", unsafe_allow_html=True)
     for support in data["support"]:
         st.markdown(f"• {support}")
     
@@ -702,7 +792,7 @@ def show_franchisor():
     if st.button("Logout"):
         st.session_state.franchisor_logged_in = False
         st.rerun()
-    tab1, tab2 = st.tabs(["📊 Leads", "⚙️ Settings"])
+    tab1, tab2 = st.tabs(["📊 Leads", "️ Settings"])
     with tab1:
         leads = get_leads()
         if leads:
@@ -710,7 +800,7 @@ def show_franchisor():
             st.write(f"✅ Found {len(leads)} real leads!")
             st.dataframe(df)
             csv = df.to_csv(index=False)
-            st.download_button(" Download CSV", csv, "leads.csv")
+            st.download_button("📥 Download CSV", csv, "leads.csv")
         else:
             st.info("No leads yet")
     with tab2:
@@ -726,7 +816,7 @@ def show_about():
     with col1: st.metric("Japanese Restaurants (2006)", "24,000", "Starting point")
     with col2: st.metric("Japanese Restaurants (Today)", "200,000+", "+733% growth")
     with col3: st.metric("Growth Period", "~18 years", "JETRO Data")
-    st.markdown("This **8x growth** in less than two decades is unprecedented in global food culture history.\n\n### Our Mission\n\nAs a personal project, I started JXPerience to:\n\n1. **📊 Aggregate Information** - Bring together comprehensive data on Japanese franchises, from well-known brands to emerging opportunities\n2. **🤝 Connect Investors** - Help serious global investors discover and connect with authentic Japanese franchise opportunities\n3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine and culture\n4. **🍱 Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, fostering deeper understanding and appreciation of Japanese culture\n\n### The Vision\n\nBy making franchise information more accessible, we hope to:\n- Support more people in discovering authentic Japanese cuisine\n- Facilitate meaningful cultural exchanges through food\n- Create shared experiences that bring people together\n- Help Japanese brands find the right partners for global expansion\n\n---\n\n*This platform is a labor of love, built to support the continued growth and appreciation of Japanese culinary excellence worldwide.*")
+    st.markdown("This **8x growth** in less than two decades is unprecedented in global food culture history.\n\n### Our Mission\n\nAs a personal project, I started JXPerience to:\n\n1. ** Aggregate Information** - Bring together comprehensive data on Japanese franchises, from well-known brands to emerging opportunities\n2. **🤝 Connect Investors** - Help serious global investors discover and connect with authentic Japanese franchise opportunities\n3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine and culture\n4. ** Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, fostering deeper understanding and appreciation of Japanese culture\n\n### The Vision\n\nBy making franchise information more accessible, we hope to:\n- Support more people in discovering authentic Japanese cuisine\n- Facilitate meaningful cultural exchanges through food\n- Create shared experiences that bring people together\n- Help Japanese brands find the right partners for global expansion\n\n---\n\n*This platform is a labor of love, built to support the continued growth and appreciation of Japanese culinary excellence worldwide.*")
     
     st.markdown("""
     <div class="beta-banner">

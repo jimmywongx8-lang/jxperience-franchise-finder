@@ -224,7 +224,8 @@ def show_home():
         """
         st.markdown(html, unsafe_allow_html=True)
         
-        btn = "Deep Dive →" if has_dd else "Apply →"
+        # CHANGED: "Apply →" to "Enquiry →"
+        btn = "Deep Dive →" if has_dd else "Enquiry →"
         if st.button(btn, key=idx):
             st.session_state.selected_franchise = brand
             st.session_state.page = "profile" if has_dd else "quiz"
@@ -256,9 +257,9 @@ def show_profile():
         st.markdown("---")
         col_p, col_c = st.columns(2)
         col_p.markdown("✅ **Pros**\n" + "\n".join([f"- {p}" for p in data["pros"]]))
-        col_c.markdown("️ **Cons**\n" + "\n".join([f"- {c}" for c in data["cons"]]))
+        col_c.markdown("⚠️ **Cons**\n" + "\n".join([f"- {c}" for c in data["cons"]]))
         st.divider()
-        if st.button("Start Application", type="primary"):
+        if st.button("Start Enquiry", type="primary"):
             st.session_state.page = "quiz"
             st.rerun()
     else:
@@ -267,7 +268,7 @@ def show_profile():
 
 def show_quiz():
     brand = st.session_state.selected_franchise or "General"
-    st.title(f"Apply: {brand}")
+    st.title(f"Enquiry: {brand}")
     if st.button("← Back"):
         st.session_state.page = "home"
         st.rerun()
@@ -279,16 +280,16 @@ def show_quiz():
         industry = st.selectbox("Industry", ["F&B", "Retail", "Corporate", "Other"])
         location = st.text_input("Location")
         timeline = st.selectbox("Timeline", ["Researching", "1-2 years", "6-12 months", "ASAP"])
-        if st.form_submit_button("Submit"):
+        if st.form_submit_button("Submit Enquiry"):
             if name and email:
-                send_email(f"Lead: {name} for {brand}", f"Name: {name}\nEmail: {email}")
+                send_email(f"Enquiry: {name} for {brand}", f"Name: {name}\nEmail: {email}")
                 save_to_sheet(brand, name, email, capital, experience, industry, location, timeline)
-                st.success("✅ Submitted!")
+                st.success("✅ Enquiry submitted!")
             else:
                 st.error("Fill in name and email")
 
 def show_franchisor():
-    st.title("🗾 Franchisor Portal")
+    st.title(" Franchisor Portal")
     st.markdown('<div style="margin-bottom: 25px;"><h3 style="color: #1a1a2e; margin-top: 0;">Why Register as a Franchisor?</h3><p style="font-size: 1.1em; line-height: 1.6;">As a Japanese franchise brand, you have unique access to the global market. Our platform connects you directly with qualified international investors.</p></div>', unsafe_allow_html=True)
     st.markdown('<div class="benefit-card"><h4>✅ What You\'ll Get as a Verified Partner</h4><ul style="padding-left: 20px; margin: 15px 0;"><li><strong>Real-time qualified leads</strong> - See genuine investor applications as they come in</li><li><strong>Pre-screened investors</strong> - All applicants are vetted for serious investment capacity</li><li><strong>Dedicated dashboard</strong> - Track your leads and review applications in one place</li><li><strong>CSV export</strong> - Download your leads in spreadsheet format</li><li><strong>Direct connection</strong> - Contact investors directly through our secure platform</li></ul></div>', unsafe_allow_html=True)
     
@@ -315,7 +316,7 @@ def show_franchisor():
     if st.button("Logout"):
         st.session_state.franchisor_logged_in = False
         st.rerun()
-    tab1, tab2 = st.tabs(["📊 Leads", "⚙️ Settings"])
+    tab1, tab2 = st.tabs([" Leads", "⚙️ Settings"])
     with tab1:
         leads = get_leads()
         if leads:
@@ -341,10 +342,9 @@ def show_about():
     with col3: st.metric("Growth Period", "~18 years", "JETRO Data")
     st.markdown("This **8x growth** in less than two decades is unprecedented in global food culture history.\n\n### Our Mission\n\nAs a personal project, I started JXPerience to:\n\n1. **📊 Aggregate Information** - Bring together comprehensive data on Japanese franchises, from well-known brands to emerging opportunities\n2. **🤝 Connect Investors** - Help serious global investors discover and connect with authentic Japanese franchise opportunities\n3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine and culture\n4. **🍱 Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, fostering deeper understanding and appreciation of Japanese culture\n\n### The Vision\n\nBy making franchise information more accessible, we hope to:\n- Support more people in discovering authentic Japanese cuisine\n- Facilitate meaningful cultural exchanges through food\n- Create shared experiences that bring people together\n- Help Japanese brands find the right partners for global expansion\n\n---\n\n*This platform is a labor of love, built to support the continued growth and appreciation of Japanese culinary excellence worldwide.*")
     
-    # === BETA / CO-CREATE BANNER ===
     st.markdown("""
     <div class="beta-banner">
-        <h4>🚧 This is a Beta Site — Help Us Build It Together!</h4>
+        <h4> This is a Beta Site — Help Us Build It Together!</h4>
         <p style="color: #78350f; margin-bottom: 10px;">
             JXPerience is currently in <strong>beta</strong>. We are actively improving the platform and would love your input.
         </p>
@@ -357,26 +357,25 @@ def show_about():
         </p>
     </div>
     """, unsafe_allow_html=True)
-    # === END BETA BANNER ===
     
     st.divider()
-    st.subheader(" Ready to Explore?")
+    st.subheader("🚀 Ready to Explore?")
     col_a, col_b = st.columns(2)
     with col_a:
         if st.button("Browse Franchises", use_container_width=True):
             st.session_state.page = "home"
             st.rerun()
     with col_b:
-        st.markdown(" **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
+        st.markdown("📧 **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
 
 # --- SIDEBAR ---
-st.sidebar.title("🗾 JP Hub")
+st.sidebar.title(" JP Hub")
 st.sidebar.markdown("---")
 st.sidebar.subheader("Navigation")
-if st.sidebar.button(" Home", use_container_width=True):
+if st.sidebar.button("🏠 Home", use_container_width=True):
     st.session_state.page = "home"
     st.rerun()
-if st.sidebar.button("ℹ️ About Us", use_container_width=True):
+if st.sidebar.button("️ About Us", use_container_width=True):
     st.session_state.page = "about"
     st.rerun()
 if st.sidebar.button("🏢 Franchisor", use_container_width=True):

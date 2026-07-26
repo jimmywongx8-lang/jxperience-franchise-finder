@@ -21,23 +21,89 @@ if 'franchisor_logged_in' not in st.session_state:
 if 'categories' not in st.session_state:
     st.session_state.categories = []
 
-# --- CUSTOM CSS ---
+# --- CUSTOM CSS (ENHANCED) ---
 st.markdown("""
 <style>
+    /* Main background */
     .main {
         background-color: #f8f9fa;
     }
+    
+    /* Typography */
     h1, h2, h3 {
         color: #1a1a2e;
         font-weight: 700;
+        margin-bottom: 1rem;
     }
+    
+    /* Buttons */
     .stButton>button {
         border-radius: 8px;
         font-weight: 600;
+        padding: 0.5rem 1.5rem;
+        transition: all 0.3s ease;
     }
-    /* Sidebar button styling */
-    div[data-testid="stSidebarNav"] {
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* Sidebar styling */
+    .css-1d391kg {
         background-color: #ffffff;
+    }
+    
+    /* Card styling for franchises */
+    .franchise-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+    
+    .franchise-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    /* Metric cards */
+    .metric-card {
+        background: rgba(255,255,255,0.2);
+        padding: 15px 25px;
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+    }
+    
+    /* Status badges */
+    .status-badge {
+        display: inline-block;
+        background: #10b981;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+    
+    /* Better spacing */
+    .stMarkdown {
+        margin-bottom: 1rem;
+    }
+    
+    /* Form styling */
+    .stTextInput>div>div>input,
+    .stSelectbox>div>div>select {
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+    }
+    
+    /* Alert boxes */
+    .stAlert {
+        border-radius: 8px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -206,30 +272,15 @@ def show_home():
             flex-wrap: wrap;
             margin-top: 25px;
         '>
-            <div style='
-                background: rgba(255,255,255,0.2);
-                padding: 15px 25px;
-                border-radius: 10px;
-                backdrop-filter: blur(10px);
-            '>
+            <div class='metric-card'>
                 <div style='font-size: 2em; font-weight: bold;'>63+</div>
                 <div style='font-size: 0.9em; opacity: 0.9;'>Brands</div>
             </div>
-            <div style='
-                background: rgba(255,255,255,0.2);
-                padding: 15px 25px;
-                border-radius: 10px;
-                backdrop-filter: blur(10px);
-            '>
+            <div class='metric-card'>
                 <div style='font-size: 2em; font-weight: bold;'>15+</div>
                 <div style='font-size: 0.9em; opacity: 0.9;'>Countries</div>
             </div>
-            <div style='
-                background: rgba(255,255,255,0.2);
-                padding: 15px 25px;
-                border-radius: 10px;
-                backdrop-filter: blur(10px);
-            '>
+            <div class='metric-card'>
                 <div style='font-size: 2em; font-weight: bold;'>$100k+</div>
                 <div style='font-size: 0.9em; opacity: 0.9;'>Investment</div>
             </div>
@@ -261,12 +312,15 @@ def show_home():
     
     st.write(f"Showing {len(filtered)} brands")
     
-    # Display brands
+    # Display brands with CARD LAYOUT
     for idx, row in filtered.iterrows():
         brand = row.get('brand_name', 'Unknown')
         has_dd = brand in FRANCHISES
         
-        st.markdown("---")
+        st.markdown(f"""
+        <div class='franchise-card'>
+        """, unsafe_allow_html=True)
+        
         col1, col2, col3 = st.columns([3, 2, 1])
         with col1:
             st.markdown(f"**{brand}**")
@@ -279,6 +333,8 @@ def show_home():
                 st.session_state.selected_franchise = brand
                 st.session_state.page = 'profile' if has_dd else 'quiz'
                 st.rerun()
+        
+        st.markdown("</div>", unsafe_allow_html=True)
 
 def show_profile():
     brand = st.session_state.selected_franchise
@@ -293,16 +349,23 @@ def show_profile():
     if brand in FRANCHISES:
         data = FRANCHISES[brand]
         st.title(f"🗾 {brand}")
-        st.success(f"**{data['overseas_status']}**")
+        
+        # Status badge
+        st.markdown(f"""
+        <div class='status-badge'>
+            {data['overseas_status']}
+        </div>
+        """, unsafe_allow_html=True)
+        
         st.info(data["story"])
         
         st.subheader("📺 Watch")
         yt_url = f"https://www.youtube.com/results?search_query={quote(data['youtube_search'])}"
         st.markdown(f"[▶️ Watch Videos]({yt_url})")
         
-        st.subheader(" News")
+        st.subheader("📰 News")
         news_url = f"https://www.google.com/search?q={quote(data['news_search'])}&tbm=nws"
-        st.markdown(f"[📰 Read News]({news_url})")
+        st.markdown(f"[ Read News]({news_url})")
         
         st.markdown("---")
         col1, col2, col3 = st.columns(3)
@@ -375,7 +438,7 @@ def show_franchisor():
         st.session_state.franchisor_logged_in = False
         st.rerun()
     
-    tab1, tab2 = st.tabs([" Leads", "⚙️ Settings"])
+    tab1, tab2 = st.tabs(["📊 Leads", "⚙️ Settings"])
     
     with tab1:
         leads = get_leads()
@@ -393,7 +456,7 @@ def show_franchisor():
         st.info("Settings coming soon")
 
 def show_about():
-    st.title(" About JXPerience")
+    st.title("🗾 About JXPerience")
     st.caption("Our Mission & Story")
     
     st.markdown("---")
@@ -460,10 +523,11 @@ def show_about():
     with col_b:
         st.markdown("📧 **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
 
-# --- SIDEBAR NAVIGATION ---
+# --- SIDEBAR NAVIGATION (IMPROVED) ---
 st.sidebar.title("🗾 JP Hub")
 st.sidebar.markdown("---")
 
+st.sidebar.subheader("Navigation")
 if st.sidebar.button("🏠 Home", use_container_width=True):
     st.session_state.page = 'home'
     st.rerun()
@@ -472,9 +536,11 @@ if st.sidebar.button("ℹ️ About Us", use_container_width=True):
     st.session_state.page = 'about'
     st.rerun()
 
-if st.sidebar.button("🏢 Franchisor", use_container_width=True):
+if st.sidebar.button(" Franchisor", use_container_width=True):
     st.session_state.page = 'franchisor'
     st.rerun()
+
+st.sidebar.markdown("---")
 
 # --- MAIN ROUTER ---
 if st.session_state.page == 'quiz':

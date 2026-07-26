@@ -21,12 +21,28 @@ if 'franchisor_logged_in' not in st.session_state:
 if 'categories' not in st.session_state:
     st.session_state.categories = []
 
+# --- CUSTOM CSS ---
+st.markdown("""
+<style>
+    .main {
+        background-color: #f8f9fa;
+    }
+    h1, h2, h3 {
+        color: #1a1a2e;
+        font-weight: 700;
+    }
+    .stButton>button {
+        border-radius: 8px;
+        font-weight: 600;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # --- LOAD 63 BRANDS ---
 @st.cache_data(ttl=300)
 def load_brands():
     try:
         df = pd.read_csv(CSV_URL)
-        # Get unique categories for sidebar
         if 'category' in df.columns:
             st.session_state.categories = df['category'].dropna().unique().tolist()
         return df
@@ -155,17 +171,77 @@ def get_leads():
 
 # --- PAGES ---
 def show_home():
-    st.title("🇯🇵 JXPerience: Japanese Franchise Finder")
-    st.caption("Connecting Japanese brands with global investors")
+    # === HERO SECTION ===
+    st.markdown("""
+    <div style='
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 50px 30px;
+        border-radius: 15px;
+        color: white;
+        margin-bottom: 30px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    '>
+        <h1 style='
+            color: white; 
+            margin: 0 0 15px 0;
+            font-size: 2.5em;
+            font-weight: 700;
+        '>🇯 Discover Japanese Franchise Opportunities</h1>
+        <p style='
+            font-size: 1.3em; 
+            margin: 0 0 20px 0; 
+            opacity: 0.95;
+        '>
+            Connecting global investors with 63+ expansion-ready Japanese brands
+        </p>
+        <div style='
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        '>
+            <div style='
+                background: rgba(255,255,255,0.2);
+                padding: 15px 25px;
+                border-radius: 10px;
+                backdrop-filter: blur(10px);
+            '>
+                <div style='font-size: 2em; font-weight: bold;'>63+</div>
+                <div style='font-size: 0.9em; opacity: 0.9;'>Brands</div>
+            </div>
+            <div style='
+                background: rgba(255,255,255,0.2);
+                padding: 15px 25px;
+                border-radius: 10px;
+                backdrop-filter: blur(10px);
+            '>
+                <div style='font-size: 2em; font-weight: bold;'>15+</div>
+                <div style='font-size: 0.9em; opacity: 0.9;'>Countries</div>
+            </div>
+            <div style='
+                background: rgba(255,255,255,0.2);
+                padding: 15px 25px;
+                border-radius: 10px;
+                backdrop-filter: blur(10px);
+            '>
+                <div style='font-size: 2em; font-weight: bold;'>$100k+</div>
+                <div style='font-size: 0.9em; opacity: 0.9;'>Investment</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    # === END HERO SECTION ===
     
     df = load_brands()
     if df.empty:
         st.error("Could not load data")
         return
     
-    st.subheader(f"Found {len(df)} Expansion-Ready Brands")
+    st.subheader("Found 63 Expansion-Ready Brands")
     
-    # Sidebar Filters (Only show on home page)
+    # Sidebar Filters
     st.sidebar.subheader("🔍 Search & Filter")
     search = st.sidebar.text_input("Search brands", "")
     categories = st.session_state.get('categories', [])
@@ -222,7 +298,7 @@ def show_profile():
         
         st.subheader("📰 News")
         news_url = f"https://www.google.com/search?q={quote(data['news_search'])}&tbm=nws"
-        st.markdown(f"[📰 Read News]({news_url})")
+        st.markdown(f"[ Read News]({news_url})")
         
         st.markdown("---")
         col1, col2, col3 = st.columns(3)
@@ -271,7 +347,7 @@ def show_quiz():
                 st.error("Fill in name and email")
 
 def show_franchisor():
-    st.title("🇯🇵 Franchisor Portal")
+    st.title("🇵 Franchisor Portal")
     
     if not st.session_state.franchisor_logged_in:
         pwd = st.text_input("Password", type="password")
@@ -295,7 +371,7 @@ def show_franchisor():
         st.session_state.franchisor_logged_in = False
         st.rerun()
     
-    tab1, tab2 = st.tabs(["📊 Leads", "⚙️ Settings"])
+    tab1, tab2 = st.tabs([" Leads", "⚙️ Settings"])
     
     with tab1:
         leads = get_leads()
@@ -313,7 +389,7 @@ def show_franchisor():
         st.info("Settings coming soon")
 
 def show_about():
-    st.title("🇯🇵 About JXPerience")
+    st.title("🇵 About JXPerience")
     st.caption("Our Mission & Story")
     
     st.markdown("---")
@@ -328,7 +404,6 @@ def show_about():
     The numbers tell an incredible story:
     """)
     
-    # JETRO Statistics
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Japanese Restaurants (2006)", "24,000", "Starting point")
@@ -350,7 +425,7 @@ def show_about():
     2. **🤝 Connect Investors** - Help serious global investors discover and connect with authentic 
        Japanese franchise opportunities
     
-    3. **🌍 Support Expansion** - Contribute to the continued global growth of Japanese cuisine 
+    3. ** Support Expansion** - Contribute to the continued global growth of Japanese cuisine 
        and culture
     
     4. **🍱 Cultural Exchange** - Enable more people worldwide to discover authentic Japanese cuisine, 
@@ -379,20 +454,21 @@ def show_about():
             st.session_state.page = 'home'
             st.rerun()
     with col_b:
-        st.markdown("📧 **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
+        st.markdown(" **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
 
 # --- SIDEBAR NAVIGATION ---
-st.sidebar.title("🇯🇵 JP Hub")
+st.sidebar.title("🇵 JP Hub")
+st.sidebar.markdown("---")
 
-if st.sidebar.button("🏠 Home"):
+if st.sidebar.button("🏠 Home", use_container_width=True):
     st.session_state.page = 'home'
     st.rerun()
 
-if st.sidebar.button("ℹ️ About Us"):
+if st.sidebar.button("ℹ️ About Us", use_container_width=True):
     st.session_state.page = 'about'
     st.rerun()
 
-if st.sidebar.button("🏢 Franchisor"):
+if st.sidebar.button("🏢 Franchisor", use_container_width=True):
     st.session_state.page = 'franchisor'
     st.rerun()
 

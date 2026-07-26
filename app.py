@@ -4,6 +4,7 @@ import smtplib
 import requests
 from email.mime.text import MIMEText
 from urllib.parse import quote
+import re
 
 # --- SECRETS ---
 YOUR_GMAIL = st.secrets.get("YOUR_GMAIL")
@@ -24,19 +25,16 @@ if 'categories' not in st.session_state:
 # --- CUSTOM CSS (ENHANCED) ---
 st.markdown("""
 <style>
-    /* Main background */
     .main {
         background-color: #f8f9fa;
     }
     
-    /* Typography */
     h1, h2, h3 {
         color: #1a1a2e;
         font-weight: 700;
         margin-bottom: 1rem;
     }
     
-    /* Buttons */
     .stButton>button {
         border-radius: 8px;
         font-weight: 600;
@@ -49,7 +47,6 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     
-    /* Metric cards */
     .metric-card {
         background: rgba(255,255,255,0.2);
         padding: 15px 25px;
@@ -57,7 +54,6 @@ st.markdown("""
         backdrop-filter: blur(10px);
     }
     
-    /* Status badges */
     .status-badge {
         display: inline-block;
         background: #10b981;
@@ -68,24 +64,20 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* Better spacing */
     .stMarkdown {
         margin-bottom: 1rem;
     }
     
-    /* Form styling */
     .stTextInput>div>div>input,
     .stSelectbox>div>div>select {
         border-radius: 8px;
         border: 1px solid #e0e0e0;
     }
     
-    /* Alert boxes */
     .stAlert {
         border-radius: 8px;
     }
     
-    /* Benefits section */
     .benefit-card {
         background: #f0f7ff;
         border-left: 4px solid #667eea;
@@ -98,6 +90,67 @@ st.markdown("""
         color: #1a1a2e;
         margin-top: 0;
     }
+    
+    /* Brand card with logo */
+    .brand-row {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        background: white;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .brand-row:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    .brand-logo {
+        width: 60px;
+        height: 60px;
+        border-radius: 10px;
+        object-fit: contain;
+        background: #f8f9fa;
+        padding: 5px;
+        margin-right: 20px;
+    }
+    
+    .brand-info {
+        flex: 1;
+    }
+    
+    .brand-name {
+        font-size: 1.2em;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0 0 5px 0;
+    }
+    
+    .brand-category {
+        font-size: 0.9em;
+        color: #666;
+        margin: 0;
+    }
+    
+    .brand-stats {
+        text-align: right;
+        margin-right: 20px;
+    }
+    
+    .brand-investment {
+        font-size: 0.95em;
+        color: #333;
+        margin: 0 0 5px 0;
+    }
+    
+    .brand-royalty {
+        font-size: 0.85em;
+        color: #666;
+        margin: 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -108,10 +161,31 @@ def load_brands():
         df = pd.read_csv(CSV_URL)
         if 'category' in df.columns:
             st.session_state.categories = df['category'].dropna().unique().tolist()
+        
+        # Extract domain from website for logo
+        if 'website' in df.columns:
+            df['domain'] = df['website'].apply(extract_domain)
+            df['logo_url'] = df['domain'].apply(lambda d: f"https://logo.clearbit.com/{d}" if d else "")
+        
         return df
     except Exception as e:
         st.error(f"Error loading data: {e}")
         return pd.DataFrame()
+
+def extract_domain(url):
+    """Extract domain from URL"""
+    if pd.isna(url) or not url:
+        return ""
+    try:
+        # Remove http/https
+        url = str(url).replace('http://', '').replace('https://', '')
+        # Remove www.
+        url = url.replace('www.', '')
+        # Get domain only
+        domain = url.split('/')[0].split('?')[0]
+        return domain
+    except:
+        return ""
 
 # --- 6 DEEP DIVE PROFILES ---
 FRANCHISES = {
@@ -290,7 +364,7 @@ def show_home():
     st.subheader("Found 63 Expansion-Ready Brands")
     
     # Sidebar Filters
-    st.sidebar.subheader(" Search & Filter")
+    st.sidebar.subheader("🔍 Search & Filter")
     search = st.sidebar.text_input("Search brands", "")
     categories = st.session_state.get('categories', [])
     selected_cat = st.sidebar.multiselect("Filter by Category", categories, default=[])
@@ -305,26 +379,43 @@ def show_home():
     
     st.write(f"Showing {len(filtered)} brands")
     
-    # Display brands with Streamlit native container (FIXED)
+    # Display brands with LOGOS
     for idx, row in filtered.iterrows():
         brand = row.get('brand_name', 'Unknown')
         has_dd = brand in FRANCHISES
+        logo_url = row.get('logo_url', '')
+        category = row.get('category', '')
+        stores = row.get('stores_japan', '')
+        investment = row.get('investment_usd', '')
+        royalty = row.get('royalty_pct', '')
         
-        with st.container():
-            col1, col2, col3 = st.columns([3, 2, 1])
-            with col1:
-                st.markdown(f"**{brand}**")
-                st.caption(f"{row.get('category', '')} | {row.get('stores_japan', '')} stores")
-            with col2:
-                st.caption(f"${row.get('investment_usd', '')} | Royalty: {row.get('royalty_pct', '')}%")
-            with col3:
-                btn = "Deep Dive →" if has_dd else "Apply →"
-                if st.button(btn, key=idx):
-                    st.session_state.selected_franchise = brand
-                    st.session_state.page = 'profile' if has_dd else 'quiz'
-                    st.rerun()
-            
-            st.markdown("---")
+        # Build logo HTML (with fallback emoji)
+        if logo_url:
+            logo_html = f'<img src="{logo_url}" class="brand-logo" onerror="this.style.display=\'none\'">'
+        else:
+            logo_html = '<div class="brand-logo" style="display:flex;align-items:center;justify-content:center;font-size:1.5em;">🍜</div>'
+        
+        # Build the card
+        st.markdown(f"""
+        <div class='brand-row'>
+            {logo_html}
+            <div class='brand-info'>
+                <p class='brand-name'>{brand}</p>
+                <p class='brand-category'>{category} | {stores} stores</p>
+            </div>
+            <div class='brand-stats'>
+                <p class='brand-investment'>${investment}</p>
+                <p class='brand-royalty'>Royalty: {royalty}%</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Button outside the HTML
+        btn = "Deep Dive →" if has_dd else "Apply →"
+        if st.button(btn, key=idx):
+            st.session_state.selected_franchise = brand
+            st.session_state.page = 'profile' if has_dd else 'quiz'
+            st.rerun()
 
 def show_profile():
     brand = st.session_state.selected_franchise
@@ -340,7 +431,6 @@ def show_profile():
         data = FRANCHISES[brand]
         st.title(f"🗾 {brand}")
         
-        # Status badge
         st.markdown(f"""
         <div class='status-badge'>
             {data['overseas_status']}
@@ -406,7 +496,6 @@ def show_quiz():
 def show_franchisor():
     st.title("🗾 Franchisor Portal")
     
-    # Add clear explanation of benefits
     st.markdown("""
     <div style='margin-bottom: 25px;'>
         <h3 style='color: #1a1a2e; margin-top: 0;'>Why Register as a Franchisor?</h3>
@@ -417,7 +506,6 @@ def show_franchisor():
     </div>
     """, unsafe_allow_html=True)
     
-    # Benefits section
     st.markdown("""
     <div class='benefit-card'>
         <h4>✅ What You'll Get as a Verified Partner</h4>
@@ -432,7 +520,6 @@ def show_franchisor():
     """, unsafe_allow_html=True)
     
     if not st.session_state.franchisor_logged_in:
-        # Add explanation for login section
         st.markdown("""
         <div style='margin-bottom: 25px;'>
             <h3 style='color: #1a1a2e; margin-top: 0;'>Access Your Franchise Dashboard</h3>
@@ -453,7 +540,6 @@ def show_franchisor():
             else:
                 st.error("Wrong password")
         
-        # Add explanation for request access
         st.markdown("""
         <div style='margin-top: 30px;'>
             <h3 style='color: #1a1a2e; margin-top: 0;'>New to JXPerience?</h3>
@@ -498,7 +584,7 @@ def show_franchisor():
             st.dataframe(df)
             
             csv = df.to_csv(index=False)
-            st.download_button("📥 Download CSV", csv, "leads.csv")
+            st.download_button(" Download CSV", csv, "leads.csv")
         else:
             st.info("No leads yet")
     
@@ -573,12 +659,12 @@ def show_about():
     with col_b:
         st.markdown("📧 **Contact:** [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)")
 
-# --- SIDEBAR NAVIGATION (IMPROVED) ---
+# --- SIDEBAR NAVIGATION ---
 st.sidebar.title("🗾 JP Hub")
 st.sidebar.markdown("---")
 
 st.sidebar.subheader("Navigation")
-if st.sidebar.button("🏠 Home", use_container_width=True):
+if st.sidebar.button(" Home", use_container_width=True):
     st.session_state.page = 'home'
     st.rerun()
 

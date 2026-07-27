@@ -144,7 +144,6 @@ def get_brand_initials(brand_name):
     return brand_name[:2].upper()
 
 def get_brand_color(brand_name):
-    # Generate consistent color based on brand name
     colors = [
         '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7',
         '#dfe6e9', '#fd79a8', '#a29bfe', '#fdcb6e', '#6c5ce7',
@@ -237,13 +236,12 @@ filtered_df = df[df['category'].isin(selected_category)]
 
 # Apply Hidden Gems filter
 if "Hidden Gems" in display_mode:
-    filtered_df = filtered_df[
-        pd.to_numeric(filtered_df['stores_overseas'].str.extract('(\d+)')[0], errors='coerce').fillna(999) < 50
-    ]
+    overseas_nums = pd.to_numeric(filtered_df['stores_overseas'].str.extract('(\d+)')[0], errors='coerce').fillna(999)
+    filtered_df = filtered_df[overseas_nums < 50].copy()
 
 # Apply Verified Only filter
 if "Verified Only" in display_mode:
-    filtered_df = filtered_df[filtered_df['overseas_franchise_confirmed'] == 'YES']
+    filtered_df = filtered_df[filtered_df['overseas_franchise_confirmed'] == 'YES'].copy()
 
 # Apply sorting
 if "Investment (Low-High)" in sort_by:
@@ -291,20 +289,6 @@ st.markdown("""
 # --- PREPARE DATA FOR DISPLAY WITH COLORED INITIALS ---
 display_df = filtered_df.copy()
 
-# Create brand display with colored initials
-def create_brand_display(row):
-    initials = row['brand_initials']
-    color = row['brand_color']
-    brand_name = row['brand_name']
-    
-    # Add hidden gem badge if applicable
-    overseas_num = pd.to_numeric(row['stores_overseas'].str.extract('(\d+)')[0], errors='coerce')
-    badge = '<span class="hidden-gem-badge">HIDDEN GEM</span>' if pd.notna(overseas_num) and overseas_num < 50 else ''
-    
-    return f'<div style="display:flex;align-items:center;"><span class="brand-initial" style="background-color:{color}">{initials}</span><span>{brand_name}</span>{badge}</div>'
-
-display_df['Brand'] = display_df.apply(create_brand_display, axis=1)
-
 # Create clickable URLs
 display_df['Website'] = display_df['website'].apply(
     lambda x: f"[🔗 Visit](https://{x})" if pd.notna(x) and x != '' else 'N/A'
@@ -318,8 +302,26 @@ display_df['Royalty %'] = display_df['royalty_pct'].apply(
     lambda x: f"{x}%" if pd.notna(x) else 'N/A'
 )
 
+# Create brand display with colored initials and hidden gem badge
+def create_brand_display(row):
+    initials = row['brand_initials']
+    color = row['brand_color']
+    brand_name = row['brand_name']
+    
+    # Check if hidden gem
+    try:
+        overseas_num = float(row['stores_overseas']) if isinstance(row['stores_overseas'], (int, float)) else int(row['stores_overseas'].replace('+', '').strip())
+        badge = '<span class="hidden-gem-badge">HIDDEN GEM</span>' if overseas_num < 50 else ''
+    except:
+        badge = ''
+    
+    return f'<div style="display:flex;align-items:center;"><span class="brand-initial" style="background-color:{color}">{initials}</span><span>{brand_name}</span>{badge}</div>'
+
+display_df['Brand'] = display_df.apply(create_brand_display, axis=1)
+
 # Rename columns
 display_df = display_df.rename(columns={
+    'brand_name': 'Brand',
     'category': 'Category',
     'stores_japan': 'Japan Stores',
     'stores_overseas': 'Overseas',
@@ -393,7 +395,7 @@ with st.form("contact_form"):
     
     if submitted:
         if not GROQ_API_KEY:
-            st.error("️ API Key not configured.")
+            st.error("⚠️ API Key not configured.")
         elif not name or not email:
             st.error("⚠️ Please fill in name and email")
         else:

@@ -232,16 +232,16 @@ selected_category = st.sidebar.multiselect(
 )
 
 # --- FILTERING & SORTING LOGIC ---
-filtered_df = df[df['category'].isin(selected_category)]
+filtered_df = df[df['category'].isin(selected_category)].copy()
 
 # Apply Hidden Gems filter
 if "Hidden Gems" in display_mode:
     overseas_nums = pd.to_numeric(filtered_df['stores_overseas'].str.extract('(\d+)')[0], errors='coerce').fillna(999)
-    filtered_df = filtered_df[overseas_nums < 50].copy()
+    filtered_df = filtered_df[overseas_nums < 50]
 
 # Apply Verified Only filter
 if "Verified Only" in display_mode:
-    filtered_df = filtered_df[filtered_df['overseas_franchise_confirmed'] == 'YES'].copy()
+    filtered_df = filtered_df[filtered_df['overseas_franchise_confirmed'] == 'YES']
 
 # Apply sorting
 if "Investment (Low-High)" in sort_by:
@@ -287,52 +287,66 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- PREPARE DATA FOR DISPLAY WITH COLORED INITIALS ---
-display_df = filtered_df.copy()
-
-# Create clickable URLs
-display_df['Website'] = display_df['website'].apply(
-    lambda x: f"[🔗 Visit](https://{x})" if pd.notna(x) and x != '' else 'N/A'
-)
-
-# Format numbers
-display_df['Franchise Fee'] = display_df['franchise_fee_usd'].apply(
-    lambda x: f"${int(x):,}" if pd.notna(x) else 'N/A'
-)
-display_df['Royalty %'] = display_df['royalty_pct'].apply(
-    lambda x: f"{x}%" if pd.notna(x) else 'N/A'
-)
+# Create a new dataframe with only the columns we need
+display_df = pd.DataFrame()
 
 # Create brand display with colored initials and hidden gem badge
-def create_brand_display(row):
+brand_displays = []
+for idx, row in filtered_df.iterrows():
     initials = row['brand_initials']
     color = row['brand_color']
     brand_name = row['brand_name']
     
     # Check if hidden gem
     try:
-        overseas_num = float(row['stores_overseas']) if isinstance(row['stores_overseas'], (int, float)) else int(row['stores_overseas'].replace('+', '').strip())
+        overseas_str = str(row['stores_overseas']).replace('+', '').strip()
+        overseas_num = int(overseas_str) if overseas_str.isdigit() else 999
         badge = '<span class="hidden-gem-badge">HIDDEN GEM</span>' if overseas_num < 50 else ''
     except:
         badge = ''
     
-    return f'<div style="display:flex;align-items:center;"><span class="brand-initial" style="background-color:{color}">{initials}</span><span>{brand_name}</span>{badge}</div>'
+    brand_displays.append(f'<div style="display:flex;align-items:center;"><span class="brand-initial" style="background-color:{color}">{initials}</span><span>{brand_name}</span>{badge}</div>')
 
-display_df['Brand'] = display_df.apply(create_brand_display, axis=1)
+display_df['Brand'] = brand_displays
+display_df['Category'] = filtered_df['category'].values
+display_df['Japan Stores'] = filtered_df['stores_japan'].values
+display_df['Overseas'] = filtered_df['stores_overseas'].values
+display_df['Investment'] = filtered_df['investment_usd'].values
 
-# Rename columns
-display_df = display_df.rename(columns={
-    'brand_name': 'Brand',
-    'category': 'Category',
-    'stores_japan': 'Japan Stores',
-    'stores_overseas': 'Overseas',
-    'investment_usd': 'Investment',
-    'target_markets': 'Target Markets',
-    'franchise_status': 'Status'
-})
+# Format franchise fee
+franchise_fees = []
+for fee in filtered_df['franchise_fee_usd']:
+    try:
+        franchise_fees.append(f"${int(fee):,}")
+    except:
+        franchise_fees.append('N/A')
+display_df['Franchise Fee'] = franchise_fees
+
+# Format royalty
+royalties = []
+for royalty in filtered_df['royalty_pct']:
+    try:
+        royalties.append(f"{royalty}%")
+    except:
+        royalties.append('N/A')
+display_df['Royalty %'] = royalties
+
+display_df['Target Markets'] = filtered_df['target_markets'].values
+
+# Create clickable URLs
+websites = []
+for url in filtered_df['website']:
+    if pd.notna(url) and url != '':
+        websites.append(f"[🔗 Visit](https://{url})")
+    else:
+        websites.append('N/A')
+display_df['Website'] = websites
+
+display_df['Status'] = filtered_df['franchise_status'].values
 
 # Show dataframe with sorting
 st.dataframe(
-    display_df[['Brand', 'Category', 'Japan Stores', 'Overseas', 'Investment', 'Franchise Fee', 'Royalty %', 'Target Markets', 'Website', 'Status']],
+    display_df,
     use_container_width=True,
     hide_index=True,
     column_config={

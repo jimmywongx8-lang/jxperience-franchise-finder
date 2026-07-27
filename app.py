@@ -61,6 +61,34 @@ st.markdown("""
         font-size: 0.85rem;
         opacity: 0.9;
     }
+    .hidden-gem-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+    .brand-initial {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-right: 8px;
+    }
+    .email-capture-box {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 16px;
+        padding: 30px;
+        margin: 20px 0;
+        border: 2px solid #dee2e6;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -92,7 +120,7 @@ def load_data():
 df = load_data()
 
 if df.empty:
-    st.warning("⚠️ No data loaded.")
+    st.warning("️ No data loaded.")
     st.stop()
 
 # Add confidence badges
@@ -100,19 +128,39 @@ def get_confidence_badge(confidence):
     if confidence == "YES":
         return "✅ Confirmed"
     elif confidence == "PROBABLE":
-        return "🟡 Probable"
+        return " Probable"
     elif confidence == "NEEDS_VERIFICATION":
         return "⚠️ Verify"
     else:
-        return "❌ No"
+        return " No"
 
 df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence_badge)
+
+# Generate colored initials for each brand
+def get_brand_initials(brand_name):
+    words = brand_name.split()
+    if len(words) >= 2:
+        return (words[0][0] + words[1][0]).upper()
+    return brand_name[:2].upper()
+
+def get_brand_color(brand_name):
+    # Generate consistent color based on brand name
+    colors = [
+        '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7',
+        '#dfe6e9', '#fd79a8', '#a29bfe', '#fdcb6e', '#6c5ce7',
+        '#00b894', '#e17055', '#0984e3', '#d63031', '#e84393'
+    ]
+    hash_val = sum(ord(c) for c in brand_name) % len(colors)
+    return colors[hash_val]
+
+df['brand_initials'] = df['brand_name'].apply(get_brand_initials)
+df['brand_color'] = df['brand_name'].apply(get_brand_color)
 
 # SECURE API KEY
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
 if not GROQ_API_KEY:
-    st.warning("️ API Key not configured.")
+    st.warning("⚠️ API Key not configured.")
 
 client = OpenAI(
     api_key=GROQ_API_KEY,
@@ -151,46 +199,85 @@ st.markdown("---")
 # --- SIDEBAR FILTERS ---
 st.sidebar.markdown("### <span style='color:#ff2d55'>JX</span>Perience", unsafe_allow_html=True)
 st.sidebar.markdown("---")
+
+# Search
 st.sidebar.markdown("#### 🔍 Search")
 search_term = st.sidebar.text_input("", placeholder="Type brand name...")
 st.sidebar.markdown("---")
 
-st.sidebar.markdown("####  Display Mode")
+# Display Mode with Hidden Gems emphasis
+st.sidebar.markdown("####  Discovery Mode")
 display_mode = st.sidebar.radio(
     "Show:",
-    ["🌟 Hidden Gems First", " All Brands (A-Z)", "✅ Verified Only"],
-    help="Hidden Gems: Brands with <50 overseas stores"
+    [" Hidden Gems (<50 overseas)", " All Brands (A-Z)", "✅ Verified Only"],
+    help="Hidden Gems: Undiscovered brands with high growth potential"
 )
-
 st.sidebar.markdown("---")
-st.sidebar.header("Filter by Category")
 
+# Sort Control
+st.sidebar.markdown("#### 📊 Sort By")
+sort_by = st.sidebar.selectbox(
+    "Primary sort:",
+    ["Brand Name (A-Z)", "Investment (Low-High)", "Investment (High-Low)", 
+     "Franchise Fee (Low-High)", "Royalty % (Low-High)", 
+     "Japan Stores (Most)", "Overseas Stores (Least)"]
+)
+st.sidebar.markdown("---")
+
+# Category Filter
+st.sidebar.header("Filter by Category")
 selected_category = st.sidebar.multiselect(
     "Select categories:", 
     options=df['category'].unique(), 
     default=df['category'].unique()
 )
 
-# --- FILTERING LOGIC ---
+# --- FILTERING & SORTING LOGIC ---
 filtered_df = df[df['category'].isin(selected_category)]
 
-# Apply display mode sorting
+# Apply Hidden Gems filter
 if "Hidden Gems" in display_mode:
-    filtered_df = filtered_df.copy()
-    filtered_df['overseas_numeric'] = pd.to_numeric(filtered_df['stores_overseas'].str.extract('(\d+)')[0], errors='coerce').fillna(999)
-    filtered_df = filtered_df.sort_values(['overseas_numeric', 'brand_name'])
-    filtered_df = filtered_df.drop(columns=['overseas_numeric'])
-elif "Verified Only" in display_mode:
+    filtered_df = filtered_df[
+        pd.to_numeric(filtered_df['stores_overseas'].str.extract('(\d+)')[0], errors='coerce').fillna(999) < 50
+    ]
+
+# Apply Verified Only filter
+if "Verified Only" in display_mode:
     filtered_df = filtered_df[filtered_df['overseas_franchise_confirmed'] == 'YES']
-    filtered_df = filtered_df.sort_values('brand_name')
+
+# Apply sorting
+if "Investment (Low-High)" in sort_by:
+    filtered_df['sort_val'] = pd.to_numeric(filtered_df['investment_usd'].str.extract('(\d+)')[0], errors='coerce').fillna(999999)
+    filtered_df = filtered_df.sort_values('sort_val')
+    filtered_df = filtered_df.drop(columns=['sort_val'])
+elif "Investment (High-Low)" in sort_by:
+    filtered_df['sort_val'] = pd.to_numeric(filtered_df['investment_usd'].str.extract('(\d+)')[0], errors='coerce').fillna(0)
+    filtered_df = filtered_df.sort_values('sort_val', ascending=False)
+    filtered_df = filtered_df.drop(columns=['sort_val'])
+elif "Franchise Fee (Low-High)" in sort_by:
+    filtered_df = filtered_df.sort_values('franchise_fee_usd')
+elif "Royalty % (Low-High)" in sort_by:
+    filtered_df = filtered_df.sort_values('royalty_pct')
+elif "Japan Stores (Most)" in sort_by:
+    filtered_df['sort_val'] = pd.to_numeric(filtered_df['stores_japan'].str.extract('(\d+)')[0], errors='coerce').fillna(0)
+    filtered_df = filtered_df.sort_values('sort_val', ascending=False)
+    filtered_df = filtered_df.drop(columns=['sort_val'])
+elif "Overseas Stores (Least)" in sort_by:
+    filtered_df['sort_val'] = pd.to_numeric(filtered_df['stores_overseas'].str.extract('(\d+)')[0], errors='coerce').fillna(999)
+    filtered_df = filtered_df.sort_values('sort_val')
+    filtered_df = filtered_df.drop(columns=['sort_val'])
 else:
     filtered_df = filtered_df.sort_values('brand_name')
 
+# Apply search
 if search_term:
     filtered_df = filtered_df[filtered_df['brand_name'].str.contains(search_term, case=False, na=False)]
 
 # --- DISPLAY COUNT ---
-st.subheader(f"Found {len(filtered_df)} Expansion-Ready Brands")
+if "Hidden Gems" in display_mode:
+    st.subheader(f" Found {len(filtered_df)} Hidden Gem Brands")
+else:
+    st.subheader(f"Found {len(filtered_df)} Expansion-Ready Brands")
 
 # --- DISCLAIMER ---
 st.markdown("""
@@ -201,12 +288,26 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- PREPARE DATA FOR DISPLAY ---
+# --- PREPARE DATA FOR DISPLAY WITH COLORED INITIALS ---
 display_df = filtered_df.copy()
 
-# Create clickable URLs using markdown
+# Create brand display with colored initials
+def create_brand_display(row):
+    initials = row['brand_initials']
+    color = row['brand_color']
+    brand_name = row['brand_name']
+    
+    # Add hidden gem badge if applicable
+    overseas_num = pd.to_numeric(row['stores_overseas'].str.extract('(\d+)')[0], errors='coerce')
+    badge = '<span class="hidden-gem-badge">HIDDEN GEM</span>' if pd.notna(overseas_num) and overseas_num < 50 else ''
+    
+    return f'<div style="display:flex;align-items:center;"><span class="brand-initial" style="background-color:{color}">{initials}</span><span>{brand_name}</span>{badge}</div>'
+
+display_df['Brand'] = display_df.apply(create_brand_display, axis=1)
+
+# Create clickable URLs
 display_df['Website'] = display_df['website'].apply(
-    lambda x: f"[🔗 Visit](https://{x if not pd.isna(x) else ''})" if pd.notna(x) and x != '' else 'N/A'
+    lambda x: f"[🔗 Visit](https://{x})" if pd.notna(x) and x != '' else 'N/A'
 )
 
 # Format numbers
@@ -217,9 +318,8 @@ display_df['Royalty %'] = display_df['royalty_pct'].apply(
     lambda x: f"{x}%" if pd.notna(x) else 'N/A'
 )
 
-# Select and rename columns for display
+# Rename columns
 display_df = display_df.rename(columns={
-    'brand_name': 'Brand',
     'category': 'Category',
     'stores_japan': 'Japan Stores',
     'stores_overseas': 'Overseas',
@@ -228,32 +328,44 @@ display_df = display_df.rename(columns={
     'franchise_status': 'Status'
 })
 
-# Show dataframe with built-in sorting (Streamlit handles this automatically)
+# Show dataframe with sorting
 st.dataframe(
     display_df[['Brand', 'Category', 'Japan Stores', 'Overseas', 'Investment', 'Franchise Fee', 'Royalty %', 'Target Markets', 'Website', 'Status']],
     use_container_width=True,
-    hide_index=True
+    hide_index=True,
+    column_config={
+        "Brand": st.column_config.TextColumn("Brand", width="medium"),
+        "Investment": st.column_config.TextColumn("Investment", width="small"),
+        "Franchise Fee": st.column_config.TextColumn("Fee", width="small"),
+        "Royalty %": st.column_config.TextColumn("Royalty", width="small"),
+    }
 )
 
-# --- INVESTOR EMAIL CAPTURE ---
+# --- ENHANCED INVESTOR EMAIL CAPTURE ---
 st.markdown("---")
-st.subheader("📬 Get Notified About New Brands")
-st.write("Don't see what you're looking for? Get notified when we add new brands.")
+st.markdown("""
+    <div class="email-capture-box">
+        <h3 style="margin-top:0;">📬 Get Early Access to New Brands</h3>
+        <p style="margin-bottom:20px;">Be the first to know when we add promising Japanese franchises in your sector. 
+        Perfect for investors scouting the next big opportunity.</p>
+    </div>
+""", unsafe_allow_html=True)
 
 with st.form("notification_signup"):
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns([2, 2, 1])
     with col1:
         investor_email = st.text_input("Your Email", placeholder="investor@example.com")
     with col2:
         investor_category = st.selectbox("Interested Category", ["All Categories"] + list(df['category'].unique()))
-    
-    submit_notification = st.form_submit_button(" Notify Me")
+    with col3:
+        submit_notification = st.form_submit_button(" Notify Me", use_container_width=True)
     
     if submit_notification:
         if not investor_email:
             st.error("Please enter your email")
         else:
-            st.success(f"✅ Thanks! We'll notify you about new {investor_category.lower()} brands.")
+            st.success("✅ You're on the list! We'll notify you about new opportunities.")
+            st.info("💡 Pro tip: Bookmark this page and check back weekly for new hidden gems!")
 
 # --- AI ASSESSMENT FORM ---
 st.markdown("---")
@@ -281,7 +393,7 @@ with st.form("contact_form"):
     
     if submitted:
         if not GROQ_API_KEY:
-            st.error("⚠️ API Key not configured.")
+            st.error("️ API Key not configured.")
         elif not name or not email:
             st.error("⚠️ Please fill in name and email")
         else:
@@ -364,4 +476,4 @@ Be honest and direct."""
 
 # Footer
 st.markdown("---")
-st.markdown("<div style='text-align: center; color: #888; font-size: 0.85rem;'>© 2026 <span style='color:#ff2d55'>JX</span>Perience</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #888; font-size: 0.85rem;'>© 2026 <span style='color:#ff2d55'>JX</span>Perience | Japanese Franchise Overseas Expansion Platform</div>", unsafe_allow_html=True)

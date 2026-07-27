@@ -69,6 +69,7 @@ st.markdown("""
         font-size: 0.7rem;
         font-weight: 600;
         margin-left: 8px;
+        display: inline-block;
     }
     .brand-initial {
         display: inline-flex;
@@ -81,6 +82,7 @@ st.markdown("""
         font-weight: 700;
         font-size: 0.9rem;
         margin-right: 8px;
+        flex-shrink: 0;
     }
     .email-capture-box {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -88,6 +90,25 @@ st.markdown("""
         padding: 30px;
         margin: 20px 0;
         border: 2px solid #dee2e6;
+    }
+    .custom-table th {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        padding: 12px 8px;
+        text-align: center;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .custom-table td {
+        padding: 10px 8px;
+        border-bottom: 1px solid #eee;
+        vertical-align: middle;
+    }
+    .custom-table tr:hover {
+        background-color: #f8f9fa;
+    }
+    .col-center {
+        text-align: center !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -114,7 +135,7 @@ def load_data():
         except FileNotFoundError:
             continue
     
-    st.error("⚠️ CSV file not found.")
+    st.error("️ CSV file not found.")
     return pd.DataFrame()
 
 df = load_data()
@@ -123,7 +144,7 @@ if df.empty:
     st.warning("️ No data loaded.")
     st.stop()
 
-# Add confidence badges
+# Helper Functions
 def get_confidence_badge(confidence):
     if confidence == "YES":
         return "✅ Confirmed"
@@ -134,14 +155,11 @@ def get_confidence_badge(confidence):
     else:
         return " No"
 
-df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence_badge)
-
-# Generate colored initials for each brand
 def get_brand_initials(brand_name):
-    words = brand_name.split()
+    words = str(brand_name).split()
     if len(words) >= 2:
         return (words[0][0] + words[1][0]).upper()
-    return brand_name[:2].upper()
+    return str(brand_name)[:2].upper()
 
 def get_brand_color(brand_name):
     colors = [
@@ -149,9 +167,11 @@ def get_brand_color(brand_name):
         '#dfe6e9', '#fd79a8', '#a29bfe', '#fdcb6e', '#6c5ce7',
         '#00b894', '#e17055', '#0984e3', '#d63031', '#e84393'
     ]
-    hash_val = sum(ord(c) for c in brand_name) % len(colors)
+    hash_val = sum(ord(c) for c in str(brand_name)) % len(colors)
     return colors[hash_val]
 
+# Pre-process dataframe
+df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence_badge)
 df['brand_initials'] = df['brand_name'].apply(get_brand_initials)
 df['brand_color'] = df['brand_name'].apply(get_brand_color)
 
@@ -286,18 +306,33 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- PREPARE DATA FOR DISPLAY WITH COLORED INITIALS ---
-# Create a new dataframe with only the columns we need
-display_df = pd.DataFrame()
+# --- CUSTOM HTML TABLE GENERATION ---
+html_table = """
+<div style="overflow-x: auto;">
+<table class="custom-table" style="width: 100%; border-collapse: collapse; font-size: 0.9rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <thead>
+        <tr>
+            <th style="text-align: left; width: 20%;">Brand</th>
+            <th style="text-align: left;">Category</th>
+            <th class="col-center">Japan Stores</th>
+            <th class="col-center">Overseas</th>
+            <th class="col-center">Investment</th>
+            <th class="col-center">Fee</th>
+            <th class="col-center">Royalty</th>
+            <th style="text-align: left;">Target Markets</th>
+            <th class="col-center">Website</th>
+            <th class="col-center">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+"""
 
-# Create brand display with colored initials and hidden gem badge
-brand_displays = []
 for idx, row in filtered_df.iterrows():
     initials = row['brand_initials']
     color = row['brand_color']
     brand_name = row['brand_name']
     
-    # Check if hidden gem
+    # Check if hidden gem for badge
     try:
         overseas_str = str(row['stores_overseas']).replace('+', '').strip()
         overseas_num = int(overseas_str) if overseas_str.isdigit() else 999
@@ -305,57 +340,44 @@ for idx, row in filtered_df.iterrows():
     except:
         badge = ''
     
-    brand_displays.append(f'<div style="display:flex;align-items:center;"><span class="brand-initial" style="background-color:{color}">{initials}</span><span>{brand_name}</span>{badge}</div>')
+    # Format values
+    franchise_fee = f"${int(row['franchise_fee_usd']):,}" if pd.notna(row['franchise_fee_usd']) else 'N/A'
+    royalty = f"{row['royalty_pct']}%" if pd.notna(row['royalty_pct']) else 'N/A'
+    
+    # Create clickable website link
+    website = row['website'] if pd.notna(row['website']) else ''
+    website_link = f'<a href="https://{website}" target="_blank" class="clickable-link">🔗 Visit</a>' if website and str(website) != 'nan' else 'N/A'
+    
+    html_table += f"""
+        <tr>
+            <td>
+                <div style="display:flex; align-items:center;">
+                    <span class="brand-initial" style="background-color:{color}">{initials}</span>
+                    <div>
+                        <div style="font-weight: 500;">{brand_name}</div>
+                        {badge}
+                    </div>
+                </div>
+            </td>
+            <td>{row['category']}</td>
+            <td class="col-center">{row['stores_japan']}</td>
+            <td class="col-center">{row['stores_overseas']}</td>
+            <td class="col-center">{row['investment_usd']}</td>
+            <td class="col-center">{franchise_fee}</td>
+            <td class="col-center">{royalty}</td>
+            <td>{row['target_markets']}</td>
+            <td class="col-center">{website_link}</td>
+            <td class="col-center">{row['franchise_status']}</td>
+        </tr>
+    """
 
-display_df['Brand'] = brand_displays
-display_df['Category'] = filtered_df['category'].values
-display_df['Japan Stores'] = filtered_df['stores_japan'].values
-display_df['Overseas'] = filtered_df['stores_overseas'].values
-display_df['Investment'] = filtered_df['investment_usd'].values
+html_table += """
+    </tbody>
+</table>
+</div>
+"""
 
-# Format franchise fee
-franchise_fees = []
-for fee in filtered_df['franchise_fee_usd']:
-    try:
-        franchise_fees.append(f"${int(fee):,}")
-    except:
-        franchise_fees.append('N/A')
-display_df['Franchise Fee'] = franchise_fees
-
-# Format royalty
-royalties = []
-for royalty in filtered_df['royalty_pct']:
-    try:
-        royalties.append(f"{royalty}%")
-    except:
-        royalties.append('N/A')
-display_df['Royalty %'] = royalties
-
-display_df['Target Markets'] = filtered_df['target_markets'].values
-
-# Create clickable URLs
-websites = []
-for url in filtered_df['website']:
-    if pd.notna(url) and url != '':
-        websites.append(f"[🔗 Visit](https://{url})")
-    else:
-        websites.append('N/A')
-display_df['Website'] = websites
-
-display_df['Status'] = filtered_df['franchise_status'].values
-
-# Show dataframe with sorting
-st.dataframe(
-    display_df,
-    use_container_width=True,
-    hide_index=True,
-    column_config={
-        "Brand": st.column_config.TextColumn("Brand", width="medium"),
-        "Investment": st.column_config.TextColumn("Investment", width="small"),
-        "Franchise Fee": st.column_config.TextColumn("Fee", width="small"),
-        "Royalty %": st.column_config.TextColumn("Royalty", width="small"),
-    }
-)
+st.markdown(html_table, unsafe_allow_html=True)
 
 # --- ENHANCED INVESTOR EMAIL CAPTURE ---
 st.markdown("---")
@@ -405,7 +427,7 @@ with st.form("contact_form"):
     selected_brand = st.selectbox("Which brand interests you?", filtered_df['brand_name'].tolist())
     message = st.text_area("Additional Info (optional)", placeholder="Your background, location plans, etc.")
     
-    submitted = st.form_submit_button("🚀 Get AI Assessment")
+    submitted = st.form_submit_button(" Get AI Assessment")
     
     if submitted:
         if not GROQ_API_KEY:
@@ -461,7 +483,7 @@ Be honest and direct."""
                     ai_analysis = json.loads(response.choices[0].message.content)
                     
                     st.success("✅ AI Assessment Complete!")
-                    st.markdown("### 📊 Your Investment Readiness Score")
+                    st.markdown("###  Your Investment Readiness Score")
                     
                     score = ai_analysis.get('readiness_score', 'N/A')
                     if score == 'High':

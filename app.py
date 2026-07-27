@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom styling
+# Custom styling with sortable table
 st.markdown("""
     <style>
     .main-header {
@@ -64,7 +64,86 @@ st.markdown("""
         font-size: 0.85rem;
         opacity: 0.9;
     }
+    .sortable-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+    .sortable-table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        padding: 12px;
+        text-align: left;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+    }
+    .sortable-table th:hover {
+        background-color: #e9ecef;
+    }
+    .sortable-table th::after {
+        content: '⇅';
+        position: absolute;
+        right: 8px;
+        opacity: 0.3;
+        font-size: 0.8rem;
+    }
+    .sortable-table th.sort-asc::after {
+        content: '↑';
+        opacity: 1;
+        color: #ff2d55;
+    }
+    .sortable-table th.sort-desc::after {
+        content: '↓';
+        opacity: 1;
+        color: #ff2d55;
+    }
+    .sortable-table td {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .sortable-table tr:hover {
+        background-color: #f8f9fa;
+    }
     </style>
+    
+    <script>
+    function sortTable(columnIndex) {
+        var table = document.getElementById('franchise-table');
+        var rows = Array.from(table.querySelectorAll('tr:not(:first-child)'));
+        var th = table.querySelectorAll('th')[columnIndex];
+        
+        var isAscending = !th.classList.contains('sort-asc');
+        
+        // Reset all headers
+        table.querySelectorAll('th').forEach(header => {
+            header.classList.remove('sort-asc', 'sort-desc');
+        });
+        
+        // Set current sort direction
+        th.classList.add(isAscending ? 'sort-asc' : 'sort-desc');
+        
+        // Sort rows
+        rows.sort((a, b) => {
+            var aText = a.querySelectorAll('td')[columnIndex].textContent.trim();
+            var bText = b.querySelectorAll('td')[columnIndex].textContent.trim();
+            
+            // Handle numeric values (remove $, %, +, etc.)
+            var aNum = parseFloat(aText.replace(/[^0-9.-]/g, ''));
+            var bNum = parseFloat(bText.replace(/[^0-9.-]/g, ''));
+            
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                return isAscending ? aNum - bNum : bNum - aNum;
+            }
+            
+            // String comparison
+            return isAscending ? aText.localeCompare(bText) : bText.localeCompare(aText);
+        });
+        
+        // Re-append sorted rows
+        rows.forEach(row => table.appendChild(row));
+    }
+    </script>
 """, unsafe_allow_html=True)
 
 # Header
@@ -73,7 +152,7 @@ st.markdown('<div class="sub-header">Japanese Franchise Overseas Expansion Platf
 st.markdown('<div class="tagline">Connecting Japanese brands with serious global investors</div>', unsafe_allow_html=True)
 st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
 
-# Load the data - works for both local and cloud
+# Load the data
 @st.cache_data
 def load_data():
     paths_to_try = [
@@ -95,7 +174,7 @@ def load_data():
 df = load_data()
 
 if df.empty:
-    st.warning("⚠️ No data loaded. Please ensure franchise_data.csv exists in your repository.")
+    st.warning("️ No data loaded. Please ensure franchise_data.csv exists in your repository.")
     st.stop()
 
 # Add confidence badges
@@ -115,7 +194,7 @@ df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
 if not GROQ_API_KEY:
-    st.warning("️ API Key not configured. Please add GROQ_API_KEY to your Streamlit secrets.")
+    st.warning("⚠️ API Key not configured.")
 
 client = OpenAI(
     api_key=GROQ_API_KEY,
@@ -180,7 +259,6 @@ filtered_df = df[df['category'].isin(selected_category)]
 
 # Apply display mode sorting
 if "Hidden Gems" in display_mode:
-    # Show brands with fewer overseas stores first (hidden gems)
     filtered_df = filtered_df.copy()
     filtered_df['overseas_numeric'] = pd.to_numeric(filtered_df['stores_overseas'].str.extract('(\d+)')[0], errors='coerce').fillna(999)
     filtered_df = filtered_df.sort_values(['overseas_numeric', 'brand_name'])
@@ -189,7 +267,6 @@ elif "Verified Only" in display_mode:
     filtered_df = filtered_df[filtered_df['overseas_franchise_confirmed'] == 'YES']
     filtered_df = filtered_df.sort_values('brand_name')
 else:
-    # Default A-Z
     filtered_df = filtered_df.sort_values('brand_name')
 
 # Apply search filter
@@ -210,31 +287,64 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- TABLE WITH CLICKABLE LINKS ---
+# --- SORTABLE TABLE WITH CLICKABLE LINKS ---
 def make_clickable_url(url):
     if pd.isna(url) or url == '':
         return 'N/A'
     if not url.startswith('http'):
         url = f'https://{url}'
-    return f'<a href="{url}" target="_blank" class="clickable-link">🔗 Visit</a>'
+    return f'<a href="{url}" target="_blank" class="clickable-link"> Visit</a>'
 
+# Prepare display dataframe
 display_df = filtered_df.copy()
 display_df['website'] = display_df['website'].apply(make_clickable_url)
 
-display_df = display_df.rename(columns={
-    'brand_name': 'Brand',
-    'category': 'Category',
-    'stores_japan': 'Japan Stores',
-    'stores_overseas': 'Overseas Stores',
-    'investment_usd': 'Investment (USD)',
-    'franchise_fee_usd': 'Franchise Fee',
-    'royalty_pct': 'Royalty %',
-    'target_markets': 'Target Markets',
-    'website': 'Website',
-    'franchise_status': 'Status'
-})
+# Format numeric columns for better display
+display_df['franchise_fee_usd'] = display_df['franchise_fee_usd'].apply(lambda x: f"${int(x):,}" if pd.notna(x) else 'N/A')
+display_df['royalty_pct'] = display_df['royalty_pct'].apply(lambda x: f"{x}%" if pd.notna(x) else 'N/A')
 
-st.markdown(display_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+# Build HTML table with sortable columns
+html_table = """
+<table id="franchise-table" class="sortable-table">
+    <thead>
+        <tr>
+            <th onclick="sortTable(0)">Brand</th>
+            <th onclick="sortTable(1)">Category</th>
+            <th onclick="sortTable(2)" style="text-align: center;">Japan Stores</th>
+            <th onclick="sortTable(3)" style="text-align: center;">Overseas Stores</th>
+            <th onclick="sortTable(4)" style="text-align: center;">Investment (USD)</th>
+            <th onclick="sortTable(5)" style="text-align: center;">Franchise Fee</th>
+            <th onclick="sortTable(6)" style="text-align: center;">Royalty %</th>
+            <th onclick="sortTable(7)">Target Markets</th>
+            <th onclick="sortTable(8)" style="text-align: center;">Website</th>
+            <th onclick="sortTable(9)" style="text-align: center;">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+"""
+
+for idx, row in display_df.iterrows():
+    html_table += f"""
+        <tr>
+            <td><strong>{row['brand_name']}</strong></td>
+            <td>{row['category']}</td>
+            <td style="text-align: center;">{row['stores_japan']}</td>
+            <td style="text-align: center;">{row['stores_overseas']}</td>
+            <td style="text-align: center;">{row['investment_usd']}</td>
+            <td style="text-align: center;">{row['franchise_fee_usd']}</td>
+            <td style="text-align: center;">{row['royalty_pct']}</td>
+            <td>{row['target_markets']}</td>
+            <td style="text-align: center;">{row['website']}</td>
+            <td style="text-align: center;">{row['franchise_status']}</td>
+        </tr>
+    """
+
+html_table += """
+    </tbody>
+</table>
+"""
+
+st.markdown(html_table, unsafe_allow_html=True)
 
 # --- INVESTOR EMAIL CAPTURE ---
 st.markdown("---")
@@ -254,7 +364,6 @@ with st.form("notification_signup"):
         if not investor_email:
             st.error("Please enter your email address")
         else:
-            # In production, save to database/Google Sheets
             st.success(f"✅ Thanks! We'll notify you when new {investor_category.lower()} brands are added.")
             st.info("💡 Tip: Bookmark this page to check back regularly for updates!")
 
@@ -285,13 +394,13 @@ with st.form("contact_form"):
     
     if submitted:
         if not GROQ_API_KEY:
-            st.error("⚠️ API Key is not configured. Please contact the administrator.")
+            st.error("️ API Key is not configured.")
         elif not name or not email:
-            st.error("️ Please fill in your name and email")
+            st.error("⚠️ Please fill in your name and email")
         else:
             brand_info = filtered_df[filtered_df['brand_name'] == selected_brand].iloc[0]
             
-            with st.spinner("🤖 AI is analyzing your profile..."):
+            with st.spinner(" AI is analyzing your profile..."):
                 try:
                     prompt = f"""You are a franchise investment analyst. Evaluate this investor's fit for a Japanese franchise opportunity.
 
@@ -353,11 +462,11 @@ Be honest and direct. If they're not a good fit, say so."""
                     col1, col2 = st.columns(2)
                     with col1:
                         st.info(f"💰 **Capital Fit:** {ai_analysis.get('capital_fit', 'N/A')}")
-                        st.info(f"🌍 **Market Fit:** {ai_analysis.get('market_fit', 'N/A')}")
+                        st.info(f" **Market Fit:** {ai_analysis.get('market_fit', 'N/A')}")
                     with col2:
                         st.success("✅ **Strengths:**\n" + "\n".join(ai_analysis.get('strengths', [])))
                         if ai_analysis.get('concerns'):
-                            st.warning("⚠️ **Concerns:**\n" + "\n".join(ai_analysis.get('concerns', [])))
+                            st.warning("️ **Concerns:**\n" + "\n".join(ai_analysis.get('concerns', [])))
                     
                     st.markdown(f"💡 **Recommendation:** {ai_analysis.get('recommendation', 'N/A')}")
                     st.markdown("---")

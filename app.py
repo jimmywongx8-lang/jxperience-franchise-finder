@@ -91,25 +91,6 @@ st.markdown("""
         margin: 20px 0;
         border: 2px solid #dee2e6;
     }
-    .custom-table th {
-        background-color: #f8f9fa;
-        color: #495057;
-        font-weight: 600;
-        padding: 12px 8px;
-        text-align: center;
-        border-bottom: 2px solid #dee2e6;
-    }
-    .custom-table td {
-        padding: 10px 8px;
-        border-bottom: 1px solid #eee;
-        vertical-align: middle;
-    }
-    .custom-table tr:hover {
-        background-color: #f8f9fa;
-    }
-    .col-center {
-        text-align: center !important;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -135,13 +116,13 @@ def load_data():
         except FileNotFoundError:
             continue
     
-    st.error("️ CSV file not found.")
+    st.error("⚠️ CSV file not found.")
     return pd.DataFrame()
 
 df = load_data()
 
 if df.empty:
-    st.warning("️ No data loaded.")
+    st.warning("⚠️ No data loaded.")
     st.stop()
 
 # Helper Functions
@@ -149,11 +130,11 @@ def get_confidence_badge(confidence):
     if confidence == "YES":
         return "✅ Confirmed"
     elif confidence == "PROBABLE":
-        return " Probable"
+        return "🟡 Probable"
     elif confidence == "NEEDS_VERIFICATION":
         return "⚠️ Verify"
     else:
-        return " No"
+        return "❌ No"
 
 def get_brand_initials(brand_name):
     words = str(brand_name).split()
@@ -228,7 +209,7 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("####  Discovery Mode")
 display_mode = st.sidebar.radio(
     "Show:",
-    [" Hidden Gems (<50 overseas)", " All Brands (A-Z)", "✅ Verified Only"],
+    ["💎 Hidden Gems (<50 overseas)", "📋 All Brands (A-Z)", "✅ Verified Only"],
     help="Hidden Gems: Undiscovered brands with high growth potential"
 )
 st.sidebar.markdown("---")
@@ -293,7 +274,7 @@ if search_term:
 
 # --- DISPLAY COUNT ---
 if "Hidden Gems" in display_mode:
-    st.subheader(f" Found {len(filtered_df)} Hidden Gem Brands")
+    st.subheader(f"💎 Found {len(filtered_df)} Hidden Gem Brands")
 else:
     st.subheader(f"Found {len(filtered_df)} Expansion-Ready Brands")
 
@@ -306,78 +287,32 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- CUSTOM HTML TABLE GENERATION ---
-html_table = """
-<div style="overflow-x: auto;">
-<table class="custom-table" style="width: 100%; border-collapse: collapse; font-size: 0.9rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-    <thead>
-        <tr>
-            <th style="text-align: left; width: 20%;">Brand</th>
-            <th style="text-align: left;">Category</th>
-            <th class="col-center">Japan Stores</th>
-            <th class="col-center">Overseas</th>
-            <th class="col-center">Investment</th>
-            <th class="col-center">Fee</th>
-            <th class="col-center">Royalty</th>
-            <th style="text-align: left;">Target Markets</th>
-            <th class="col-center">Website</th>
-            <th class="col-center">Status</th>
-        </tr>
-    </thead>
-    <tbody>
-"""
+# --- DISPLAY TABLE USING STREAMLIT NATIVE COMPONENT ---
+# Prepare display dataframe
+display_df = filtered_df.copy()
 
-for idx, row in filtered_df.iterrows():
-    initials = row['brand_initials']
-    color = row['brand_color']
-    brand_name = row['brand_name']
-    
-    # Check if hidden gem for badge
-    try:
-        overseas_str = str(row['stores_overseas']).replace('+', '').strip()
-        overseas_num = int(overseas_str) if overseas_str.isdigit() else 999
-        badge = '<span class="hidden-gem-badge">HIDDEN GEM</span>' if overseas_num < 50 else ''
-    except:
-        badge = ''
-    
-    # Format values
-    franchise_fee = f"${int(row['franchise_fee_usd']):,}" if pd.notna(row['franchise_fee_usd']) else 'N/A'
-    royalty = f"{row['royalty_pct']}%" if pd.notna(row['royalty_pct']) else 'N/A'
-    
-    # Create clickable website link
-    website = row['website'] if pd.notna(row['website']) else ''
-    website_link = f'<a href="https://{website}" target="_blank" class="clickable-link">🔗 Visit</a>' if website and str(website) != 'nan' else 'N/A'
-    
-    html_table += f"""
-        <tr>
-            <td>
-                <div style="display:flex; align-items:center;">
-                    <span class="brand-initial" style="background-color:{color}">{initials}</span>
-                    <div>
-                        <div style="font-weight: 500;">{brand_name}</div>
-                        {badge}
-                    </div>
-                </div>
-            </td>
-            <td>{row['category']}</td>
-            <td class="col-center">{row['stores_japan']}</td>
-            <td class="col-center">{row['stores_overseas']}</td>
-            <td class="col-center">{row['investment_usd']}</td>
-            <td class="col-center">{franchise_fee}</td>
-            <td class="col-center">{royalty}</td>
-            <td>{row['target_markets']}</td>
-            <td class="col-center">{website_link}</td>
-            <td class="col-center">{row['franchise_status']}</td>
-        </tr>
-    """
+# Add formatted columns
+display_df['Franchise Fee'] = display_df['franchise_fee_usd'].apply(lambda x: f"${int(x):,}" if pd.notna(x) else 'N/A')
+display_df['Royalty %'] = display_df['royalty_pct'].apply(lambda x: f"{x}%" if pd.notna(x) else 'N/A')
+display_df['Website'] = display_df['website'].apply(lambda x: f"[🔗 Visit](https://{x})" if pd.notna(x) and x != '' else 'N/A')
 
-html_table += """
-    </tbody>
-</table>
-</div>
-"""
+# Rename for display
+display_df = display_df.rename(columns={
+    'brand_name': 'Brand',
+    'category': 'Category',
+    'stores_japan': 'Japan Stores',
+    'stores_overseas': 'Overseas',
+    'investment_usd': 'Investment',
+    'target_markets': 'Target Markets',
+    'franchise_status': 'Status'
+})
 
-st.markdown(html_table, unsafe_allow_html=True)
+# Show using Streamlit's native dataframe (sortable and reliable)
+st.dataframe(
+    display_df[['Brand', 'Category', 'Japan Stores', 'Overseas', 'Investment', 'Franchise Fee', 'Royalty %', 'Target Markets', 'Website', 'Status']],
+    use_container_width=True,
+    hide_index=True
+)
 
 # --- ENHANCED INVESTOR EMAIL CAPTURE ---
 st.markdown("---")
@@ -396,7 +331,7 @@ with st.form("notification_signup"):
     with col2:
         investor_category = st.selectbox("Interested Category", ["All Categories"] + list(df['category'].unique()))
     with col3:
-        submit_notification = st.form_submit_button(" Notify Me", use_container_width=True)
+        submit_notification = st.form_submit_button("🔔 Notify Me", use_container_width=True)
     
     if submit_notification:
         if not investor_email:
@@ -427,7 +362,7 @@ with st.form("contact_form"):
     selected_brand = st.selectbox("Which brand interests you?", filtered_df['brand_name'].tolist())
     message = st.text_area("Additional Info (optional)", placeholder="Your background, location plans, etc.")
     
-    submitted = st.form_submit_button(" Get AI Assessment")
+    submitted = st.form_submit_button("🚀 Get AI Assessment")
     
     if submitted:
         if not GROQ_API_KEY:
@@ -437,7 +372,7 @@ with st.form("contact_form"):
         else:
             brand_info = filtered_df[filtered_df['brand_name'] == selected_brand].iloc[0]
             
-            with st.spinner("🤖 AI analyzing..."):
+            with st.spinner(" AI analyzing..."):
                 try:
                     prompt = f"""You are a franchise investment analyst. Evaluate this investor:
 
@@ -483,7 +418,7 @@ Be honest and direct."""
                     ai_analysis = json.loads(response.choices[0].message.content)
                     
                     st.success("✅ AI Assessment Complete!")
-                    st.markdown("###  Your Investment Readiness Score")
+                    st.markdown("### 📊 Your Investment Readiness Score")
                     
                     score = ai_analysis.get('readiness_score', 'N/A')
                     if score == 'High':

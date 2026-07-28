@@ -2,7 +2,8 @@ import streamlit as st
 
 st.set_page_config(
     page_title="About | JXPerience",
-    page_icon="🔴"
+    page_icon="🔴",
+    layout="wide"
 )
 
 # Custom styling
@@ -33,9 +34,16 @@ st.markdown("""
         margin: 20px 0;
         border-left: 4px solid #ff2d55;
     }
+    .story-box {
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+        border-radius: 12px;
+        padding: 30px;
+        margin: 20px 0;
+        border: 2px solid #ff2d55;
+    }
     .stat-highlight {
-        font-size: 1.1rem;
-        font-weight: 600;
+        font-size: 1.3rem;
+        font-weight: 700;
         color: #ff2d55;
     }
     .feedback-box {
@@ -56,6 +64,25 @@ st.markdown("""
 st.markdown('<div class="main-header"><span class="brand-accent">JX</span>Perience<span class="beta-badge">🚀 BETA</span></div>', unsafe_allow_html=True)
 st.markdown("### About JXPerience")
 st.markdown("---")
+
+# Our Story
+st.markdown("""
+    <div class="story-box">
+        <h3 style="margin-top: 0;">❤️ Our Story</h3>
+        <p style="font-size: 1.05rem; line-height: 1.7;">
+            At JXPerience, we have a deep passion for <strong>Japanese cuisine and culture</strong>. 
+            Having witnessed the incredible global expansion of Japanese F&B firsthand, we were amazed by the 
+            transformation: from just <strong>24,000 eateries in 2006</strong> to over <strong>200,000 today</strong> 
+            according to <a href="https://www.jetro.go.jp" target="_blank">JETRO</a> — an <strong>8x growth 
+            in less than two decades</strong>.
+        </p>
+        <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 0;">
+            Yet despite this remarkable growth, most Japanese franchises remain concentrated in Japan, 
+            and international investors struggle to find reliable information about these opportunities. 
+            We created JXPerience to bridge this gap and help these incredible brands reach their global potential.
+        </p>
+    </div>
+""", unsafe_allow_html=True)
 
 # Mission Statement
 st.markdown("""
@@ -84,12 +111,7 @@ accessible to global investors through:
 - ✅ **Comprehensive data** - Investment ranges, fees, target markets, and expansion status
 - ✅ **Hidden gems** - Discover lesser-known brands with high growth potential
 - ✅ **Zero friction** - Free access to curated franchise information
-
-**The Impact:**
-According to <a href="https://www.jetro.go.jp" target="_blank">JETRO</a>, Japanese F&B franchises have grown 
-<strong>8x in less than two decades</strong>, yet most remain concentrated in Japan. We're changing that 
-by making international expansion accessible and data-driven.
-""", unsafe_allow_html=True)
+""")
 
 st.markdown("---")
 
@@ -106,8 +128,8 @@ st.markdown("""
         </p>
         <ul style="line-height: 1.8;">
             <li>💡 <strong>Share your feedback</strong> - What features do you need?</li>
-            <li>🎯 <strong>Tell us what's missing</strong> - Which brands should we add?</li>
-            <li> <strong>Report issues</strong> - Found a bug or data error?</li>
+            <li> <strong>Tell us what's missing</strong> - Which brands should we add?</li>
+            <li>🐛 <strong>Report issues</strong> - Found a bug or data error?</li>
             <li>🌟 <strong>Suggest improvements</strong> - How can we serve you better?</li>
         </ul>
         <p style="margin-top: 20px; margin-bottom: 0;">
@@ -146,7 +168,6 @@ with st.form("feedback_form"):
         if not feedback_message:
             st.error("Please enter your feedback message")
         else:
-            # In production, save to database/Google Sheets/email
             st.success("""
                 ✅ **Thank you for your feedback!**
                 
@@ -155,33 +176,26 @@ with st.form("feedback_form"):
                 
                 Your contribution helps make JXPerience better for everyone. 🙏
             """)
-            st.info("💡 Tip: Bookmark this page to check back for updates based on community feedback!")
 
 st.markdown("---")
 
 # Contact & Connect
 st.markdown("### 📬 Stay Connected")
-col1, col2, col3 = st.columns(3)
+
+col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("""
         **📧 Email Us**  
-        [hello@jxperience.com](mailto:hello@jxperience.com)  
-        For partnership inquiries
+        [jxperience.info@gmail.com](mailto:jxperience.info@gmail.com)  
+        For partnership inquiries and questions
     """)
 
 with col2:
     st.markdown("""
         **💬 Join the Community**  
-        [Join our mailing list](#)  
-        Get updates on new features
-    """)
-
-with col3:
-    st.markdown("""
-        ** Follow Us**  
-        [@JXPerience](#)  
-        Latest updates & insights
+        Get updates on new features and brands  
+        Use the feedback form above to stay in the loop!
     """)
 
 # Footer

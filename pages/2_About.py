@@ -2,11 +2,11 @@ import streamlit as st
 
 st.set_page_config(
     page_title="About | JXPerience",
-    page_icon="🔴",
+    page_icon="",
     layout="wide"
 )
 
-# Custom styling
+# Custom styling - BLUE THEME
 st.markdown("""
     <style>
     .main-header {
@@ -15,11 +15,11 @@ st.markdown("""
         color: #1f1f1f;
     }
     .brand-accent {
-        color: #ff2d55;
+        color: #0066cc;
     }
     .beta-badge {
-        background-color: #fff3cd;
-        color: #856404;
+        background-color: #e3f2fd;
+        color: #1565c0;
         padding: 4px 12px;
         border-radius: 20px;
         font-size: 0.85rem;
@@ -32,22 +32,22 @@ st.markdown("""
         border-radius: 12px;
         padding: 25px;
         margin: 20px 0;
-        border-left: 4px solid #ff2d55;
+        border-left: 4px solid #0066cc;
     }
     .story-box {
-        background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
         border-radius: 12px;
         padding: 30px;
         margin: 20px 0;
-        border: 2px solid #ff2d55;
+        border: 2px solid #0066cc;
     }
     .stat-highlight {
         font-size: 1.3rem;
         font-weight: 700;
-        color: #ff2d55;
+        color: #0066cc;
     }
     .feedback-box {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
         color: white;
         border-radius: 16px;
         padding: 30px;
@@ -56,6 +56,16 @@ st.markdown("""
     .feedback-box h3 {
         color: white;
         margin-top: 0;
+    }
+    .ai-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-left: 8px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -76,10 +86,14 @@ st.markdown("""
             according to <a href="https://www.jetro.go.jp" target="_blank">JETRO</a> — an <strong>8x growth 
             in less than two decades</strong>.
         </p>
-        <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 0;">
+        <p style="font-size: 1.05rem; line-height: 1.7;">
             Yet despite this remarkable growth, most Japanese franchises remain concentrated in Japan, 
             and international investors struggle to find reliable information about these opportunities. 
             We created JXPerience to bridge this gap and help these incredible brands reach their global potential.
+        </p>
+        <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 0;">
+            <span class="ai-badge">🤖 BUILT WITH AI</span> This project is built with <strong>AI agent coding on a shoestring budget</strong>, 
+            proving that powerful platforms can be created efficiently with modern AI tools.
         </p>
     </div>
 """, unsafe_allow_html=True)
@@ -97,7 +111,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Why We Started This
-st.markdown("### 🔴 Why JXPerience?")
+st.markdown("### 🔵 Why JXPerience?")
 st.markdown("""
 **The Problem:**
 - Japanese franchises have incredible global potential but limited overseas presence
@@ -127,10 +141,10 @@ st.markdown("""
             <strong>We invite you to co-create this platform with us:</strong>
         </p>
         <ul style="line-height: 1.8;">
-            <li>💡 <strong>Share your feedback</strong> - What features do you need?</li>
-            <li> <strong>Tell us what's missing</strong> - Which brands should we add?</li>
+            <li> <strong>Share your feedback</strong> - What features do you need?</li>
+            <li>🔍 <strong>Tell us what's missing</strong> - Which brands should we add?</li>
             <li>🐛 <strong>Report issues</strong> - Found a bug or data error?</li>
-            <li>🌟 <strong>Suggest improvements</strong> - How can we serve you better?</li>
+            <li> <strong>Suggest improvements</strong> - How can we serve you better?</li>
         </ul>
         <p style="margin-top: 20px; margin-bottom: 0;">
             Your input directly shapes the future of JXPerience. 
@@ -174,7 +188,7 @@ with st.form("feedback_form"):
                 We've received your input and will review it personally. 
                 If you provided an email, we'll follow up with you directly.
                 
-                Your contribution helps make JXPerience better for everyone. 🙏
+                Your contribution helps make JXPerience better for everyone. 
             """)
 
 st.markdown("---")

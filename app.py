@@ -7,12 +7,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
 import os
-from PIL import Image
-import io
 
 st.set_page_config(
     page_title="JXPerience | Japanese Franchise Expansion Platform", 
-    page_icon="",
+    page_icon="🔴",
     layout="wide"
 )
 
@@ -60,7 +58,6 @@ st.markdown("""
         font-weight: 700;
         font-size: 1.2rem;
         color: white;
-        background: #0066cc;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -90,45 +87,63 @@ if df.empty:
 if 'selected_brand' in st.session_state:
     del st.session_state['selected_brand']
 
-# Helper function to get brand logo
-def get_brand_logo(brand_name, website=None):
+# ========== LOGO FUNCTIONS ==========
+def get_franchise_logo(brand_name, website=None):
     """
-    Try to get brand logo from:
-    1. Local logos folder if exists
-    2. Website favicon as fallback
-    3. Brand initials as last resort
+    Get actual franchise logo using multiple sources:
+    1. Clearbit Logo API (free, no key needed)
+    2. Google Favicon Service
+    3. Local logos folder (for manual uploads)
+    4. Fallback to colored initials
     """
-    # Check if logo exists in local folder
-    logo_filename = f"logos/{brand_name.replace(' ', '_').lower()}.png"
-    if os.path.exists(logo_filename):
-        return logo_filename
+    # Try 1: Check local logos folder first (for manual uploads)
+    if brand_name:
+        logo_filename = f"logos/{brand_name.replace(' ', '_').lower()}.png"
+        if os.path.exists(logo_filename):
+            return logo_filename
+        
+        # Try other extensions
+        for ext in ['.jpg', '.jpeg', '.svg', '.webp']:
+            alt_filename = f"logos/{brand_name.replace(' ', '_').lower()}{ext}"
+            if os.path.exists(alt_filename):
+                return alt_filename
     
-    # Try alternative formats
-    for ext in ['.jpg', '.jpeg', '.svg']:
-        alt_filename = f"logos/{brand_name.replace(' ', '_').lower()}{ext}"
-        if os.path.exists(alt_filename):
-            return alt_filename
+    # Try 2: Clearbit Logo API (most reliable)
+    if website and pd.notna(website):
+        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0]
+        if domain:
+            return f"https://logo.clearbit.com/{domain}"
     
-    # Return None to use initials
+    # Try 3: Google Favicon Service (fallback)
+    if website and pd.notna(website):
+        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0]
+        if domain:
+            return f"https://www.google.com/s2/favicons?domain={domain}&sz=128"
+    
     return None
 
-# Helper function to generate initials with color
 def get_brand_initials(brand_name):
-    words = brand_name.split()
+    """Generate initials from brand name"""
+    if not brand_name:
+        return "??"
+    words = str(brand_name).split()
     if len(words) >= 2:
         return (words[0][0] + words[1][0]).upper()
-    return brand_name[:2].upper()
+    return str(brand_name)[:2].upper()
 
 def get_brand_color(brand_name):
+    """Generate consistent color for each brand"""
     colors = ['#0066cc', '#0052a3', '#1976d2', '#0288d1', '#0097a7', 
-              '#00796b', '#388e3c', '#689f38', '#afb42b', '#fbc02d']
-    hash_val = sum(ord(c) for c in brand_name) % len(colors)
+              '#00796b', '#388e3c', '#689f38', '#afb42b', '#fbc02d',
+              '#ff9800', '#ff5722', '#795548', '#607d8b', '#9c27b0']
+    hash_val = sum(ord(c) for c in str(brand_name)) % len(colors)
     return colors[hash_val]
+# ========== END LOGO FUNCTIONS ==========
 
 # Helper
 def get_confidence_badge(confidence):
     if confidence == "YES": return "✅ Confirmed"
-    elif confidence == "PROBABLE": return "🟡 Probable"
+    elif confidence == "PROBABLE": return " Probable"
     elif confidence == "NEEDS_VERIFICATION": return "⚠️ Verify"
     return "❌ No"
 
@@ -137,7 +152,7 @@ df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence
 # API Key
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 if not GROQ_API_KEY:
-    st.warning("⚠️ API Key not configured.")
+    st.warning("️ API Key not configured.")
 
 client = OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
 
@@ -200,17 +215,27 @@ st.markdown("### 📊 Franchise Directory")
 # Display with logos
 for idx, row in filtered_df.iterrows():
     brand_name = row['brand_name']
-    logo_path = get_brand_logo(brand_name, row.get('website'))
+    website = row.get('website', '')
+    logo_source = get_franchise_logo(brand_name, website)
     initials = get_brand_initials(brand_name)
     brand_color = get_brand_color(brand_name)
     
     col1, col2, col3, col4, col5 = st.columns([1, 3, 2, 2, 1])
     
     with col1:
-        # Display logo or initials
-        if logo_path:
-            st.image(logo_path, width=50)
+        # Try to display actual logo
+        if logo_source:
+            try:
+                st.image(logo_source, width=50, use_column_width=False)
+            except:
+                # Fallback to initials if image fails
+                st.markdown(f"""
+                    <div class="brand-initial" style="background-color: {brand_color};">
+                        {initials}
+                    </div>
+                """, unsafe_allow_html=True)
         else:
+            # Show colored initials
             st.markdown(f"""
                 <div class="brand-initial" style="background-color: {brand_color};">
                     {initials}
@@ -301,7 +326,7 @@ with st.form("contact_form"):
         else:
             brand_info = filtered_df[filtered_df['brand_name'] == selected_brand].iloc[0]
             
-            with st.spinner("🤖 AI analyzing..."):
+            with st.spinner(" AI analyzing..."):
                 try:
                     prompt = f"""You are a franchise investment analyst. Evaluate this investor:
 
@@ -390,7 +415,7 @@ if st.session_state.get('show_inquiry_form') and st.session_state.get('last_ai_a
     
     st.markdown(f"""
         <div class="inquiry-box">
-            <h3 style="margin-top:0; color:#0066cc;">🚀 Ready to contact {brand_name}?</h3>
+            <h3 style="margin-top:0; color:#0066cc;"> Ready to contact {brand_name}?</h3>
             <p>
                 You have a <strong>{ai_score}</strong> fit. 
                 The next step is to connect with the franchisor. 
@@ -417,7 +442,7 @@ if st.session_state.get('show_inquiry_form') and st.session_state.get('last_ai_a
             height=100
         )
         
-        submit_inquiry = st.form_submit_button(" Send Inquiry & Get Prospectus", type="primary", use_container_width=True)
+        submit_inquiry = st.form_submit_button("📤 Send Inquiry & Get Prospectus", type="primary", use_container_width=True)
         
         if submit_inquiry:
             if not inquiry_email:
@@ -431,7 +456,7 @@ if st.session_state.get('show_inquiry_form') and st.session_state.get('last_ai_a
                         msg = MIMEMultipart()
                         msg['From'] = admin_email
                         msg['To'] = admin_email
-                        msg['Subject'] = f"🔥 NEW LEAD: {inquiry_name} interested in {brand_name}"
+                        msg['Subject'] = f" NEW LEAD: {inquiry_name} interested in {brand_name}"
                         
                         body = f"""
 New Franchise Inquiry Received!

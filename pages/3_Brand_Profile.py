@@ -1,9 +1,8 @@
 import streamlit as st
 import pandas as pd
 import os
-import requests
 
-st.set_page_config(page_title="Brand Profile | JXPerience", page_icon="", layout="wide")
+st.set_page_config(page_title="Brand Profile | JXPerience", page_icon="🔴", layout="wide")
 
 st.markdown("""
     <style>
@@ -13,16 +12,6 @@ st.markdown("""
         border-left: 6px solid #0066cc;
     }
     .brand-name { font-size: 2.5rem; font-weight: 700; color: #0066cc; }
-    .brand-logo-large {
-        width: 100px;
-        height: 100px;
-        border-radius: 12px;
-        object-fit: contain;
-        background: white;
-        padding: 10px;
-        border: 2px solid #e0e0e0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
     .info-card {
         background: white; border-radius: 12px; padding: 25px; margin: 15px 0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e0e0e0;
@@ -32,53 +21,58 @@ st.markdown("""
     .stat-value { font-size: 1.5rem; font-weight: 700; color: #0066cc; }
     .stat-label { font-size: 0.85rem; color: #666; }
     .brand-initial-large {
-        width: 100px;
-        height: 100px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 2.5rem;
-        color: white;
+        width: 100px; height: 100px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 2.5rem; color: white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .logo-large-container {
+        width: 100px; height: 100px;
+        display: flex; align-items: center; justify-content: center;
+        background: white; border-radius: 12px;
+        border: 2px solid #e0e0e0; padding: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .logo-large-container img {
+        max-width: 100%; max-height: 100%;
+        object-fit: contain;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# ========== SAME LOGO FUNCTIONS ==========
-def get_brand_logo_url(brand_name, website=None):
-    """Get brand logo using multiple reliable sources"""
-    # Method 1: Brandfetch API
-    if brand_name:
-        brand_slug = brand_name.replace(' ', '').lower()
-        brandfetch_url = f"https://cdn.brandfetch.io/{brand_slug}/logo.png"
-        try:
-            response = requests.head(brandfetch_url, timeout=3)
-            if response.status_code == 200:
-                return brandfetch_url
-        except:
-            pass
+# ========== LOGO FUNCTION ==========
+def get_logo_html_large(brand_name, website=None):
+    """Returns HTML with large logo and automatic fallback"""
+    if not brand_name:
+        return None
     
-    # Method 2: Clearbit
+    initials = get_brand_initials(brand_name)
+    brand_color = get_brand_color(brand_name)
+    
+    logo_urls = []
+    
     if website and pd.notna(website):
-        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0]
+        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0].replace('www.', '')
         if domain:
-            clearbit_url = f"https://logo.clearbit.com/{domain}"
-            try:
-                response = requests.head(clearbit_url, timeout=3)
-                if response.status_code == 200:
-                    return clearbit_url
-            except:
-                pass
+            logo_urls.append(f"https://logo.clearbit.com/{domain}")
+            logo_urls.append(f"https://www.google.com/s2/favicons?domain={domain}&sz=256")
     
-    # Method 3: Google favicon
-    if website and pd.notna(website):
-        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0]
-        if domain:
-            return f"https://www.google.com/s2/favicons?domain={domain}&sz=128"
+    if not logo_urls:
+        return f'''<div class="brand-initial-large" style="background-color: {brand_color};">{initials}</div>'''
     
-    return None
+    primary_url = logo_urls[0]
+    
+    html = f'''
+    <div class="logo-large-container" id="logo-large-{brand_name.replace(' ', '')}">
+        <img 
+            src="{primary_url}" 
+            alt="{brand_name}"
+            onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'brand-initial-large\\' style=\\'background-color: {brand_color};\\'>{initials}</div>';"
+            style="max-width: 80px; max-height: 80px;"
+        />
+    </div>
+    '''
+    return html
 
 def get_brand_initials(brand_name):
     if not brand_name:
@@ -129,28 +123,12 @@ brand_data = brand_data.iloc[0]
 
 # Get logo
 website = brand_data.get('website', '')
-logo_url = get_brand_logo_url(brand_name, website)
-initials = get_brand_initials(brand_name)
-brand_color = get_brand_color(brand_name)
+logo_html = get_logo_html_large(brand_name, website)
 
 # Header with Logo
 col_logo, col_info = st.columns([1, 4])
 with col_logo:
-    if logo_url:
-        try:
-            st.image(logo_url, width=100, use_column_width=False)
-        except:
-            st.markdown(f"""
-                <div class="brand-initial-large" style="background-color: {brand_color};">
-                    {initials}
-                </div>
-            """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-            <div class="brand-initial-large" style="background-color: {brand_color};">
-                {initials}
-            </div>
-        """, unsafe_allow_html=True)
+    st.markdown(logo_html, unsafe_allow_html=True)
 
 with col_info:
     st.markdown(f"""
@@ -165,7 +143,7 @@ with col_info:
         </div>
     """, unsafe_allow_html=True)
 
-# Rest of the profile page code...
+# Investment
 st.markdown("### 💰 Investment Overview")
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -182,6 +160,56 @@ with col3:
     except:
         royalty = 'N/A'
     st.markdown(f"""<div class="info-card"><h3>Royalty Fee</h3><div style="font-size: 1.8rem; font-weight: 700; color: #0066cc;">{royalty}%</div><div style="color: #666;">Monthly</div></div>""", unsafe_allow_html=True)
+
+# About
+try:
+    if pd.notna(brand_data.get('notes', '')) and brand_data.get('notes', '') != '':
+        st.markdown("### 📖 About This Brand")
+        st.markdown(f"""<div class="info-card">{brand_data['notes']}</div>""", unsafe_allow_html=True)
+except:
+    pass
+
+# Expansion
+st.markdown("### 🌍 Expansion Information")
+col1, col2 = st.columns(2)
+with col1:
+    try:
+        exp_type = brand_data.get('expansion_type', 'Single-unit') if 'expansion_type' in brand_data else 'Single-unit'
+        if pd.isna(exp_type):
+            exp_type = 'Single-unit'
+    except:
+        exp_type = 'Single-unit'
+    
+    st.markdown(f"""<div class="info-card"><h3>Target Markets</h3><p>{brand_data['target_markets']}</p><h3 style="margin-top: 20px;">Expansion Type</h3><p>{exp_type}</p></div>""", unsafe_allow_html=True)
+
+with col2:
+    try:
+        website = brand_data['website'] if pd.notna(brand_data['website']) else ''
+    except:
+        website = ''
+    
+    try:
+        status = brand_data.get('franchise_status', 'N/A')
+        if pd.isna(status):
+            status = 'N/A'
+    except:
+        status = 'N/A'
+    
+    st.markdown(f"""<div class="info-card"><h3>Website</h3><p><a href="https://{website}" target="_blank" style="color: #0066cc;"> {website if website else 'N/A'}</a></p><h3 style="margin-top: 20px;">Verification Status</h3><p>{status}</p></div>""", unsafe_allow_html=True)
+
+# CTA
+st.markdown("---")
+st.markdown("""<div class="info-card" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #0066cc;"><h3 style="color: #0066cc;">🚀 Ready to Learn More?</h3><p>Get the complete investment prospectus and connect directly with the franchisor.</p></div>""", unsafe_allow_html=True)
+
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("📊 Get AI Assessment", use_container_width=True):
+        st.session_state['selected_brand'] = brand_data['brand_name']
+        st.switch_page("app.py")
+with col2:
+    if st.button("📤 Contact Franchisor", use_container_width=True):
+        st.session_state['selected_brand'] = brand_data['brand_name']
+        st.switch_page("app.py")
 
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #888; font-size: 0.85rem;'>© 2026 JXPerience</div>", unsafe_allow_html=True)

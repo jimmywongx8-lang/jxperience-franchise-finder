@@ -75,6 +75,19 @@ st.markdown("""
         margin: 20px 0;
         border: 2px solid #0066cc;
     }
+    .view-btn {
+        background-color: #0066cc;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .view-btn:hover {
+        background-color: #0052a3;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -114,7 +127,7 @@ def get_confidence_badge(confidence):
     if confidence == "YES":
         return "✅ Confirmed"
     elif confidence == "PROBABLE":
-        return "🟡 Probable"
+        return " Probable"
     elif confidence == "NEEDS_VERIFICATION":
         return "⚠️ Verify"
     else:
@@ -127,7 +140,7 @@ df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
 if not GROQ_API_KEY:
-    st.warning("⚠️ API Key not configured.")
+    st.warning("️ API Key not configured.")
 
 client = OpenAI(
     api_key=GROQ_API_KEY,
@@ -176,7 +189,7 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("#### 💎 Discovery Mode")
 display_mode = st.sidebar.radio(
     "Show:",
-    ["💎 Hidden Gems (<50 overseas)", " All Brands (A-Z)", "✅ Verified Only"],
+    ["💎 Hidden Gems (<50 overseas)", "📋 All Brands (A-Z)", "✅ Verified Only"],
     help="Hidden Gems: Undiscovered brands with high growth potential"
 )
 st.sidebar.markdown("---")
@@ -254,35 +267,63 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- DISPLAY TABLE WITH PROFILE LINKS ---
-display_df = filtered_df.copy()
-display_df['Franchise Fee'] = display_df['franchise_fee_usd'].apply(lambda x: f"${int(x):,}" if pd.notna(x) else 'N/A')
-display_df['Royalty %'] = display_df['royalty_pct'].apply(lambda x: f"{x}%" if pd.notna(x) else 'N/A')
-display_df['Website'] = display_df['website'].apply(lambda x: f"[🔗 Visit](https://{x})" if pd.notna(x) and x != '' else 'N/A')
+# --- DISPLAY TABLE WITH PROFILE LINKS (HTML) ---
+html_table = """
+<div style="overflow-x: auto;">
+<table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <thead>
+        <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: #495057;">Brand</th>
+            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: #495057;">Category</th>
+            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: #495057;">Japan Stores</th>
+            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: #495057;">Overseas</th>
+            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: #495057;">Investment</th>
+            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: #495057;">Fee</th>
+            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: #495057;">Royalty %</th>
+            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: #495057;">Target Markets</th>
+            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: #495057;">Website</th>
+            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: #495057;">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+"""
 
-# Add clickable profile links
-display_df['Profile'] = display_df['brand_name'].apply(
-    lambda x: f"[🔍 View](/Brand_Profile?brand={x.replace(' ', '%20')})"
-)
+for idx, row in filtered_df.iterrows():
+    brand_name = row['brand_name']
+    brand_url = f"/Brand_Profile?brand={brand_name.replace(' ', '%20')}"
+    
+    # Format values
+    franchise_fee = f"${int(row['franchise_fee_usd']):,}" if pd.notna(row['franchise_fee_usd']) else 'N/A'
+    royalty = f"{row['royalty_pct']}%" if pd.notna(row['royalty_pct']) else 'N/A'
+    
+    # Create clickable website link
+    website = row['website'] if pd.notna(row['website']) else ''
+    website_link = f'<a href="https://{website}" target="_blank" style="color:#0066cc;text-decoration:none;">🔗 Visit</a>' if website and str(website) != 'nan' else 'N/A'
+    
+    html_table += f"""
+        <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 10px 8px;">
+                <a href="{brand_url}" class="view-btn">🔍 View {brand_name}</a>
+            </td>
+            <td style="padding: 10px 8px;">{row['category']}</td>
+            <td style="padding: 10px 8px; text-align: center;">{row['stores_japan']}</td>
+            <td style="padding: 10px 8px; text-align: center;">{row['stores_overseas']}</td>
+            <td style="padding: 10px 8px; text-align: center;">{row['investment_usd']}</td>
+            <td style="padding: 10px 8px; text-align: center;">{franchise_fee}</td>
+            <td style="padding: 10px 8px; text-align: center;">{royalty}</td>
+            <td style="padding: 10px 8px;">{row['target_markets']}</td>
+            <td style="padding: 10px 8px; text-align: center;">{website_link}</td>
+            <td style="padding: 10px 8px; text-align: center;">{row['franchise_status']}</td>
+        </tr>
+    """
 
-display_df = display_df.rename(columns={
-    'brand_name': 'Brand',
-    'category': 'Category',
-    'stores_japan': 'Japan Stores',
-    'stores_overseas': 'Overseas',
-    'investment_usd': 'Investment',
-    'target_markets': 'Target Markets',
-    'franchise_status': 'Status'
-})
+html_table += """
+    </tbody>
+</table>
+</div>
+"""
 
-st.dataframe(
-    display_df[['Profile', 'Brand', 'Category', 'Japan Stores', 'Overseas', 'Investment', 'Franchise Fee', 'Royalty %', 'Target Markets', 'Website', 'Status']],
-    use_container_width=True,
-    hide_index=True,
-    column_config={
-        "Profile": st.column_config.LinkColumn("Details", width="small"),
-    }
-)
+st.markdown(html_table, unsafe_allow_html=True)
 
 # --- INVESTOR EMAIL CAPTURE (General) ---
 st.markdown("---")
@@ -344,7 +385,7 @@ with st.form("contact_form"):
                                   index=filtered_df['brand_name'].tolist().index(default_brand) if default_brand in filtered_df['brand_name'].tolist() else 0)
     message = st.text_area("Additional Info (optional)", placeholder="Your background, location plans, etc.")
     
-    submitted = st.form_submit_button("🚀 Get AI Assessment")
+    submitted = st.form_submit_button(" Get AI Assessment")
     
     if submitted:
         if not GROQ_API_KEY:
@@ -416,7 +457,7 @@ Be honest and direct."""
                     col1, col2 = st.columns(2)
                     with col1:
                         st.info(f"💰 **Capital Fit:** {ai_analysis.get('capital_fit', 'N/A')}")
-                        st.info(f" **Market Fit:** {ai_analysis.get('market_fit', 'N/A')}")
+                        st.info(f"🌍 **Market Fit:** {ai_analysis.get('market_fit', 'N/A')}")
                     with col2:
                         st.success("✅ **Strengths:**\n" + "\n".join(ai_analysis.get('strengths', [])))
                         if ai_analysis.get('concerns'):
@@ -444,7 +485,7 @@ if st.session_state.get('show_inquiry_form') and st.session_state.get('last_ai_a
     
     st.markdown(f"""
         <div class="inquiry-box">
-            <h3 style="margin-top:0; color:#0066cc;"> Ready to contact {brand_name}?</h3>
+            <h3 style="margin-top:0; color:#0066cc;">🚀 Ready to contact {brand_name}?</h3>
             <p>
                 You have a <strong>{ai_score}</strong> fit. 
                 The next step is to connect with the franchisor. 

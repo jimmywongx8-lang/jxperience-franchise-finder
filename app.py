@@ -39,18 +39,21 @@ st.markdown("""
         border: 2px solid #0066cc;
     }
     .brand-initial {
-        width: 50px; height: 50px; border-radius: 8px;
+        width: 60px; height: 60px; border-radius: 10px;
         display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: 1.2rem; color: white;
+        font-weight: 700; font-size: 1.5rem; color: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    .logo-container {
+    .logo-wrapper {
+        width: 60px; height: 60px;
+        display: flex; align-items: center; justify-content: center;
+        background: white; border-radius: 10px;
+        border: 2px solid #e0e0e0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .logo-wrapper img {
         width: 50px; height: 50px;
-        display: flex; align-items: center; justify-content: center;
-        background: white; border-radius: 8px;
-        border: 1px solid #e0e0e0; padding: 5px;
-    }
-    .logo-container img {
-        max-width: 100%; max-height: 100%;
         object-fit: contain;
     }
     </style>
@@ -78,11 +81,10 @@ if df.empty:
 if 'selected_brand' in st.session_state:
     del st.session_state['selected_brand']
 
-# ========== AUTOMATIC LOGO FUNCTION ==========
+# ========== LOGO FUNCTION ==========
 def get_logo_html(brand_name, website=None):
     """
-    Returns HTML with logo image and automatic fallback to initials.
-    Uses multiple sources - browser tries each one.
+    Returns HTML with logo that auto-falls back to initials
     """
     if not brand_name:
         return None
@@ -90,41 +92,28 @@ def get_logo_html(brand_name, website=None):
     initials = get_brand_initials(brand_name)
     brand_color = get_brand_color(brand_name)
     
-    # Build list of logo URLs to try
-    logo_urls = []
-    
-    # Source 1: Logo.dev (very reliable)
+    # Try to get logo URL
+    logo_url = None
     if website and pd.notna(website):
         domain = str(website).replace('https://', '').replace('http://', '').split('/')[0].replace('www.', '')
         if domain:
-            logo_urls.append(f"https://img.logo.dev/{domain}?token=pk_test_123")
-            logo_urls.append(f"https://logo.clearbit.com/{domain}")
+            # Use Clearbit - most reliable
+            logo_url = f"https://logo.clearbit.com/{domain}"
     
-    # Source 2: Google favicon (always works, but small)
-    if website and pd.notna(website):
-        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0].replace('www.', '')
-        if domain:
-            logo_urls.append(f"https://www.google.com/s2/favicons?domain={domain}&sz=128")
-    
-    # If no URLs, just show initials
-    if not logo_urls:
+    if logo_url:
+        # Return image with fallback to initials
+        return f'''
+        <div class="logo-wrapper">
+            <img 
+                src="{logo_url}" 
+                alt="{brand_name}"
+                onerror="this.parentElement.innerHTML='<div class=\\'brand-initial\\' style=\\'background-color: {brand_color};\\'>{initials}</div>'"
+            />
+        </div>
+        '''
+    else:
+        # No logo available, show initials
         return f'''<div class="brand-initial" style="background-color: {brand_color};">{initials}</div>'''
-    
-    # Build HTML with fallback chain
-    # The first image tries to load; if it fails, onerror replaces it with initials
-    primary_url = logo_urls[0]
-    
-    html = f'''
-    <div class="logo-container" id="logo-{brand_name.replace(' ', '')}">
-        <img 
-            src="{primary_url}" 
-            alt="{brand_name}"
-            onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'brand-initial\\' style=\\'background-color: {brand_color};\\'>{initials}</div>';"
-            style="max-width: 40px; max-height: 40px;"
-        />
-    </div>
-    '''
-    return html
 
 def get_brand_initials(brand_name):
     if not brand_name:
@@ -171,8 +160,8 @@ st.markdown("---")
 st.sidebar.header("🔍 Search")
 search_term = st.sidebar.text_input("", placeholder="Type brand name...")
 
-st.sidebar.header("💎 Discovery Mode")
-display_mode = st.sidebar.radio("Show:", ["💎 Hidden Gems (<50 overseas)", " All Brands (A-Z)", "✅ Verified Only"])
+st.sidebar.header(" Discovery Mode")
+display_mode = st.sidebar.radio("Show:", ["💎 Hidden Gems (<50 overseas)", "📋 All Brands (A-Z)", "✅ Verified Only"])
 
 st.sidebar.header("📊 Sort By")
 sort_by = st.sidebar.selectbox("Primary sort:", ["Brand Name (A-Z)", "Investment (Low-High)", "Investment (High-Low)", "Franchise Fee (Low-High)"])
@@ -201,7 +190,7 @@ else:
 if search_term:
     filtered_df = filtered_df[filtered_df['brand_name'].str.contains(search_term, case=False, na=False)]
 
-st.subheader(f" Found {len(filtered_df)} Brands")
+st.subheader(f"💎 Found {len(filtered_df)} Brands")
 
 st.markdown("""
     <div class="disclaimer-box">
@@ -211,7 +200,7 @@ st.markdown("""
 
 st.markdown("### 📊 Franchise Directory")
 
-# Display with automatic logos
+# Display with logos
 for idx, row in filtered_df.iterrows():
     brand_name = row['brand_name']
     website = row.get('website', '')
@@ -228,7 +217,7 @@ for idx, row in filtered_df.iterrows():
     
     with col3:
         st.write(f"🇯🇵 {row['stores_japan']} stores")
-        st.write(f"🌏 {row['stores_overseas']} overseas")
+        st.write(f" {row['stores_overseas']} overseas")
     
     with col4:
         st.write(f"💰 {row['investment_usd']}")
@@ -240,7 +229,7 @@ for idx, row in filtered_df.iterrows():
             st.session_state['selected_brand'] = brand_name
             st.switch_page("pages/3_Brand_Profile.py")
 
-# [Keep rest of your code - email capture, AI form, inquiry form, footer]
+# [Keep rest of your existing code - email capture, AI form, inquiry form, footer]
 
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #888; font-size: 0.85rem;'>© 2026 <span style='color:#0066cc'>JX</span>Perience | Japanese Franchise Overseas Expansion Platform</div>", unsafe_allow_html=True)

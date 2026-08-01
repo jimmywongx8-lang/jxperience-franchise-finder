@@ -34,9 +34,8 @@ def load_data():
 
 df = load_data()
 
-# Navigation
-if st.button("⬅️ Back to All Brands"):
-    st.switch_page("app.py")
+# Navigation - FIXED: Use link to main page
+st.page_link("app.py", label="⬅️ Back to All Brands", icon="🏠")
 
 # Get brand from session state or query params
 brand_name = st.session_state.get('selected_brand', '')
@@ -95,8 +94,8 @@ try:
 except:
     pass
 
-# Expansion
-st.markdown("###  Expansion Information")
+# Expansion - FIXED: Use .get() to avoid KeyError
+st.markdown("### 🌍 Expansion Information")
 col1, col2 = st.columns(2)
 with col1:
     try:
@@ -113,7 +112,16 @@ with col2:
         website = brand_data['website'] if pd.notna(brand_data['website']) else ''
     except:
         website = ''
-    st.markdown(f"""<div class="info-card"><h3>Website</h3><p><a href="https://{website}" target="_blank" style="color: #0066cc;">🔗 {website if website else 'N/A'}</a></p><h3 style="margin-top: 20px;">Verification Status</h3><p>{brand_data['franchise_status']}</p></div>""", unsafe_allow_html=True)
+    
+    # FIXED: Use .get() for franchise_status
+    try:
+        status = brand_data.get('franchise_status', 'N/A')
+        if pd.isna(status):
+            status = 'N/A'
+    except:
+        status = 'N/A'
+    
+    st.markdown(f"""<div class="info-card"><h3>Website</h3><p><a href="https://{website}" target="_blank" style="color: #0066cc;">🔗 {website if website else 'N/A'}</a></p><h3 style="margin-top: 20px;">Verification Status</h3><p>{status}</p></div>""", unsafe_allow_html=True)
 
 # CTA
 st.markdown("---")

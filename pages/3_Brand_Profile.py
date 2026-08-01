@@ -40,37 +40,54 @@ st.markdown("""
         font-weight: 700;
         font-size: 2.5rem;
         color: white;
-        background: #0066cc;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Helper functions
-def get_brand_logo(brand_name, website=None):
-    """Get brand logo from local folder"""
-    logo_filename = f"logos/{brand_name.replace(' ', '_').lower()}.png"
-    if os.path.exists(logo_filename):
-        return logo_filename
+# ========== LOGO FUNCTIONS (Same as app.py) ==========
+def get_franchise_logo(brand_name, website=None):
+    """Get actual franchise logo using multiple sources"""
+    # Try 1: Check local logos folder first
+    if brand_name:
+        logo_filename = f"logos/{brand_name.replace(' ', '_').lower()}.png"
+        if os.path.exists(logo_filename):
+            return logo_filename
+        
+        for ext in ['.jpg', '.jpeg', '.svg', '.webp']:
+            alt_filename = f"logos/{brand_name.replace(' ', '_').lower()}{ext}"
+            if os.path.exists(alt_filename):
+                return alt_filename
     
-    for ext in ['.jpg', '.jpeg', '.svg']:
-        alt_filename = f"logos/{brand_name.replace(' ', '_').lower()}{ext}"
-        if os.path.exists(alt_filename):
-            return alt_filename
+    # Try 2: Clearbit Logo API
+    if website and pd.notna(website):
+        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0]
+        if domain:
+            return f"https://logo.clearbit.com/{domain}"
+    
+    # Try 3: Google Favicon Service
+    if website and pd.notna(website):
+        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0]
+        if domain:
+            return f"https://www.google.com/s2/favicons?domain={domain}&sz=128"
     
     return None
 
 def get_brand_initials(brand_name):
-    words = brand_name.split()
+    if not brand_name:
+        return "??"
+    words = str(brand_name).split()
     if len(words) >= 2:
         return (words[0][0] + words[1][0]).upper()
-    return brand_name[:2].upper()
+    return str(brand_name)[:2].upper()
 
 def get_brand_color(brand_name):
     colors = ['#0066cc', '#0052a3', '#1976d2', '#0288d1', '#0097a7', 
-              '#00796b', '#388e3c', '#689f38', '#afb42b', '#fbc02d']
-    hash_val = sum(ord(c) for c in brand_name) % len(colors)
+              '#00796b', '#388e3c', '#689f38', '#afb42b', '#fbc02d',
+              '#ff9800', '#ff5722', '#795548', '#607d8b', '#9c27b0']
+    hash_val = sum(ord(c) for c in str(brand_name)) % len(colors)
     return colors[hash_val]
+# ========== END LOGO FUNCTIONS ==========
 
 @st.cache_data
 def load_data():
@@ -106,16 +123,24 @@ if brand_data.empty:
     st.stop()
 brand_data = brand_data.iloc[0]
 
-# Get logo or initials
-logo_path = get_brand_logo(brand_name, brand_data.get('website'))
+# Get logo
+website = brand_data.get('website', '')
+logo_source = get_franchise_logo(brand_name, website)
 initials = get_brand_initials(brand_name)
 brand_color = get_brand_color(brand_name)
 
 # Header with Logo
 col_logo, col_info = st.columns([1, 4])
 with col_logo:
-    if logo_path:
-        st.image(logo_path, width=100)
+    if logo_source:
+        try:
+            st.image(logo_source, width=100)
+        except:
+            st.markdown(f"""
+                <div class="brand-initial-large" style="background-color: {brand_color};">
+                    {initials}
+                </div>
+            """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
             <div class="brand-initial-large" style="background-color: {brand_color};">
@@ -196,11 +221,11 @@ st.markdown("""<div class="info-card" style="background: linear-gradient(135deg,
 
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("📊 Get AI Assessment", use_container_width=True):
+    if st.button(" Get AI Assessment", use_container_width=True):
         st.session_state['selected_brand'] = brand_data['brand_name']
         st.switch_page("app.py")
 with col2:
-    if st.button("📤 Contact Franchisor", use_container_width=True):
+    if st.button(" Contact Franchisor", use_container_width=True):
         st.session_state['selected_brand'] = brand_data['brand_name']
         st.switch_page("app.py")
 

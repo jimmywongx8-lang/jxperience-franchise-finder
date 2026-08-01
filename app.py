@@ -7,10 +7,12 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
 import os
+from PIL import Image
+import io
 
 st.set_page_config(
     page_title="JXPerience | Japanese Franchise Expansion Platform", 
-    page_icon="🔴",
+    page_icon="",
     layout="wide"
 )
 
@@ -39,6 +41,27 @@ st.markdown("""
         border-radius: 16px; padding: 30px; margin: 20px 0;
         border: 2px solid #0066cc;
     }
+    .brand-logo {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: contain;
+        background: white;
+        padding: 5px;
+        border: 1px solid #e0e0e0;
+    }
+    .brand-initial {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: white;
+        background: #0066cc;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -60,19 +83,54 @@ def load_data():
 
 df = load_data()
 if df.empty:
-    st.warning("️ No data loaded.")
+    st.warning("⚠️ No data loaded.")
     st.stop()
 
-# Clear selected brand when loading main page (prevents redirect loop)
+# Clear selected brand when loading main page
 if 'selected_brand' in st.session_state:
     del st.session_state['selected_brand']
+
+# Helper function to get brand logo
+def get_brand_logo(brand_name, website=None):
+    """
+    Try to get brand logo from:
+    1. Local logos folder if exists
+    2. Website favicon as fallback
+    3. Brand initials as last resort
+    """
+    # Check if logo exists in local folder
+    logo_filename = f"logos/{brand_name.replace(' ', '_').lower()}.png"
+    if os.path.exists(logo_filename):
+        return logo_filename
+    
+    # Try alternative formats
+    for ext in ['.jpg', '.jpeg', '.svg']:
+        alt_filename = f"logos/{brand_name.replace(' ', '_').lower()}{ext}"
+        if os.path.exists(alt_filename):
+            return alt_filename
+    
+    # Return None to use initials
+    return None
+
+# Helper function to generate initials with color
+def get_brand_initials(brand_name):
+    words = brand_name.split()
+    if len(words) >= 2:
+        return (words[0][0] + words[1][0]).upper()
+    return brand_name[:2].upper()
+
+def get_brand_color(brand_name):
+    colors = ['#0066cc', '#0052a3', '#1976d2', '#0288d1', '#0097a7', 
+              '#00796b', '#388e3c', '#689f38', '#afb42b', '#fbc02d']
+    hash_val = sum(ord(c) for c in brand_name) % len(colors)
+    return colors[hash_val]
 
 # Helper
 def get_confidence_badge(confidence):
     if confidence == "YES": return "✅ Confirmed"
     elif confidence == "PROBABLE": return "🟡 Probable"
     elif confidence == "NEEDS_VERIFICATION": return "⚠️ Verify"
-    return " No"
+    return "❌ No"
 
 df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence_badge)
 
@@ -129,7 +187,7 @@ if search_term:
     filtered_df = filtered_df[filtered_df['brand_name'].str.contains(search_term, case=False, na=False)]
 
 # Display
-st.subheader(f" Found {len(filtered_df)} Brands")
+st.subheader(f"💎 Found {len(filtered_df)} Brands")
 
 st.markdown("""
     <div class="disclaimer-box">
@@ -139,26 +197,42 @@ st.markdown("""
 
 st.markdown("### 📊 Franchise Directory")
 
-# Display with navigation buttons
+# Display with logos
 for idx, row in filtered_df.iterrows():
-    col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+    brand_name = row['brand_name']
+    logo_path = get_brand_logo(brand_name, row.get('website'))
+    initials = get_brand_initials(brand_name)
+    brand_color = get_brand_color(brand_name)
+    
+    col1, col2, col3, col4, col5 = st.columns([1, 3, 2, 2, 1])
     
     with col1:
-        st.markdown(f"**{row['brand_name']}**")
-        st.caption(row['category'])
+        # Display logo or initials
+        if logo_path:
+            st.image(logo_path, width=50)
+        else:
+            st.markdown(f"""
+                <div class="brand-initial" style="background-color: {brand_color};">
+                    {initials}
+                </div>
+            """, unsafe_allow_html=True)
     
     with col2:
+        st.markdown(f"**{brand_name}**")
+        st.caption(row['category'])
+    
+    with col3:
         st.write(f"🇯🇵 {row['stores_japan']} stores")
         st.write(f"🌏 {row['stores_overseas']} overseas")
     
-    with col3:
+    with col4:
         st.write(f"💰 {row['investment_usd']}")
         fee_val = f"${int(row['franchise_fee_usd']):,}" if pd.notna(row['franchise_fee_usd']) else 'N/A'
         st.write(f"Fee: {fee_val}")
     
-    with col4:
+    with col5:
         if st.button("🔍 View Details", key=f"view_{idx}"):
-            st.session_state['selected_brand'] = row['brand_name']
+            st.session_state['selected_brand'] = brand_name
             st.switch_page("pages/3_Brand_Profile.py")
 
 # Email capture

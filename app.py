@@ -100,7 +100,7 @@ def load_data():
         except FileNotFoundError:
             continue
     
-    st.error("️ CSV file not found.")
+    st.error("⚠️ CSV file not found.")
     return pd.DataFrame()
 
 df = load_data()
@@ -116,7 +116,7 @@ def get_confidence_badge(confidence):
     elif confidence == "PROBABLE":
         return " Probable"
     elif confidence == "NEEDS_VERIFICATION":
-        return "️ Verify"
+        return "⚠️ Verify"
     else:
         return " No"
 
@@ -127,7 +127,7 @@ df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
 if not GROQ_API_KEY:
-    st.warning("️ API Key not configured.")
+    st.warning("⚠️ API Key not configured.")
 
 client = OpenAI(
     api_key=GROQ_API_KEY,
@@ -258,7 +258,7 @@ st.markdown("""
 display_df = filtered_df.copy()
 display_df['Franchise Fee'] = display_df['franchise_fee_usd'].apply(lambda x: f"${int(x):,}" if pd.notna(x) else 'N/A')
 display_df['Royalty %'] = display_df['royalty_pct'].apply(lambda x: f"{x}%" if pd.notna(x) else 'N/A')
-display_df['Website'] = display_df['website'].apply(lambda x: f"[🔗 Visit](https://{x})" if pd.notna(x) and x != '' else 'N/A')
+display_df['Website'] = display_df['website'].apply(lambda x: f"[ Visit](https://{x})" if pd.notna(x) and x != '' else 'N/A')
 
 display_df = display_df.rename(columns={
     'brand_name': 'Brand',
@@ -292,7 +292,7 @@ with st.form("notification_signup"):
     with col2:
         investor_category = st.selectbox("Interested Category", ["All Categories"] + list(df['category'].unique()))
     with col3:
-        submit_notification = st.form_submit_button("🔔 Notify Me", use_container_width=True)
+        submit_notification = st.form_submit_button(" Notify Me", use_container_width=True)
     
     if submit_notification:
         if not investor_email:
@@ -308,8 +308,12 @@ st.write("Fill out this form for an **AI-qualified assessment** of your fit.")
 # Initialize session state
 if 'show_inquiry_form' not in st.session_state:
     st.session_state['show_inquiry_form'] = False
+if 'selected_brand_for_inquiry' not in st.session_state:
     st.session_state['selected_brand_for_inquiry'] = ""
+if 'last_ai_analysis' not in st.session_state:
     st.session_state['last_ai_analysis'] = None
+if 'last_investor_data' not in st.session_state:
+    st.session_state['last_investor_data'] = {}
 
 with st.form("contact_form"):
     col1, col2 = st.columns(2)
@@ -328,17 +332,17 @@ with st.form("contact_form"):
     selected_brand = st.selectbox("Which brand interests you?", filtered_df['brand_name'].tolist())
     message = st.text_area("Additional Info (optional)", placeholder="Your background, location plans, etc.")
     
-    submitted = st.form_submit_button(" Get AI Assessment")
+    submitted = st.form_submit_button("🚀 Get AI Assessment")
     
     if submitted:
         if not GROQ_API_KEY:
-            st.error("⚠️ API Key not configured.")
+            st.error("️ API Key not configured.")
         elif not name or not email:
-            st.error("️ Please fill in name and email")
+            st.error("⚠️ Please fill in name and email")
         else:
             brand_info = filtered_df[filtered_df['brand_name'] == selected_brand].iloc[0]
             
-            with st.spinner(" AI analyzing..."):
+            with st.spinner("🤖 AI analyzing..."):
                 try:
                     prompt = f"""You are a franchise investment analyst. Evaluate this investor:
 
@@ -384,7 +388,7 @@ Be honest and direct."""
                     ai_analysis = json.loads(response.choices[0].message.content)
                     
                     st.success("✅ AI Assessment Complete!")
-                    st.markdown("###  Your Investment Readiness Score")
+                    st.markdown("### 📊 Your Investment Readiness Score")
                     
                     score = ai_analysis.get('readiness_score', 'N/A')
                     if score == 'High':
@@ -420,11 +424,11 @@ Be honest and direct."""
                 except Exception as e:
                     st.error(f"❌ AI Analysis failed: {str(e)}")
 
-# --- LEAD CAPTURE / INQUIRY FORM (WORKING EMAIL) ---
-if st.session_state.get('show_inquiry_form'):
+# --- LEAD CAPTURE / INQUIRY FORM ---
+if st.session_state.get('show_inquiry_form') and st.session_state.get('last_ai_analysis'):
     st.markdown("---")
     brand_name = st.session_state['selected_brand_for_inquiry']
-    ai_score = st.session_state['last_ai_analysis'].get('readiness_score', 'Good') if st.session_state['last_ai_analysis'] else 'Good'
+    ai_score = st.session_state['last_ai_analysis'].get('readiness_score', 'Good')
     
     st.markdown(f"""
         <div class="inquiry-box">
@@ -455,7 +459,7 @@ if st.session_state.get('show_inquiry_form'):
             height=100
         )
         
-        submit_inquiry = st.form_submit_button(" Send Inquiry & Get Prospectus", type="primary", use_container_width=True)
+        submit_inquiry = st.form_submit_button("📤 Send Inquiry & Get Prospectus", type="primary", use_container_width=True)
         
         if submit_inquiry:
             if not inquiry_email:
@@ -535,20 +539,23 @@ Experience: {prev_data.get('experience', 'N/A')}
                         """)
                         st.balloons()
                         st.session_state['show_inquiry_form'] = False
+                        st.session_state['last_ai_analysis'] = None
                         
                     else:
                         # Fallback if no email configured
-                        st.success("""
+                        st.success(f"""
                             ✅ **Inquiry Submitted!**
                             
                             Thank you for your interest. We will contact you at {inquiry_email} within 24 hours with the investment prospectus.
                         """)
-                        st.info(" Note: Email notifications are not configured. Contact admin@jxperience.com for details.")
+                        st.info("️ Note: Email notifications are not configured. Contact admin@jxperience.com for details.")
                         st.session_state['show_inquiry_form'] = False
+                        st.session_state['last_ai_analysis'] = None
                     
                 except Exception as e:
                     st.error(f"Failed to send inquiry. Please email us directly at jxperience.info@gmail.com")
                     st.session_state['show_inquiry_form'] = False
+                    st.session_state['last_ai_analysis'] = None
 
 # Footer
 st.markdown("---")

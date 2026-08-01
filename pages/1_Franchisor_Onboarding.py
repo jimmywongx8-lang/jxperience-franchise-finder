@@ -2,32 +2,21 @@ import streamlit as st
 import pandas as pd
 from openai import OpenAI
 import json
-import os
 
-# --- CONFIGURATION ---
-# SECURE API KEY - reads from Streamlit Secrets
-GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
-
-# CSV path - works for both local and Streamlit Cloud
-if os.path.exists("C:\\jfa_scraper\\franchise_data.csv"):
-    CSV_PATH = "C:\\jfa_scraper\\franchise_data.csv"
-else:
-    CSV_PATH = "franchise_data.csv"
-
+# App Title - JXPerience Branding
 st.set_page_config(
-    page_title="JXPerience | フランチャイズ登録", 
+    page_title="JXPerience | Japanese Franchise Expansion Platform", 
     page_icon="🔴",
     layout="wide"
 )
 
-# Custom styling - Blue Theme
+# Custom styling
 st.markdown("""
     <style>
     .main-header {
         font-size: 2.5rem;
         font-weight: 700;
         color: #1f1f1f;
-        letter-spacing: -0.5px;
     }
     .brand-accent {
         color: #0066cc;
@@ -37,170 +26,437 @@ st.markdown("""
         color: #666;
         margin-top: -10px;
     }
-    .info-box {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        border-radius: 12px;
-        padding: 20px;
-        margin: 20px 0;
-        border-left: 4px solid #0066cc;
+    .tagline {
+        font-size: 0.95rem;
+        color: #888;
+        font-style: italic;
     }
-    .step-badge {
-        background: #0066cc;
+    .disclaimer-box {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 12px 16px;
+        margin: 20px 0;
+        font-size: 0.9rem;
+        color: #856404;
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
         color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        display: inline-block;
-        margin-right: 8px;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        margin: 10px;
+    }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+    .stat-label {
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
+    .email-capture-box {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 16px;
+        padding: 30px;
+        margin: 20px 0;
+        border: 2px solid #dee2e6;
+    }
+    .inquiry-box {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-radius: 16px;
+        padding: 30px;
+        margin: 20px 0;
+        border: 2px solid #0066cc;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Navigation & Header
-col1, col2 = st.columns([1, 5])
-with col1:
-    if st.button("⬅️ メインページに戻る"):
-        st.switch_page("app.py")
-with col2:
-    st.markdown('<div class="main-header"><span class="brand-accent">JX</span>Perience</div>', unsafe_allow_html=True)
+# Header
+st.markdown('<div class="main-header"><span class="brand-accent">JX</span>Perience</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-header">Japanese Franchise Overseas Expansion Platform</div>', unsafe_allow_html=True)
+st.markdown('<div class="tagline">Connecting Japanese brands with serious global investors</div>', unsafe_allow_html=True)
+st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
 
-st.markdown('<div class="sub-header">フランチャイズ・オーナー様向け オンボーディング</div>', unsafe_allow_html=True)
-st.markdown("日本のブランド紹介文を貼り付けてください。AIが自動的に英訳し、海外投資家向けに最適化します。")
+# Load the data
+@st.cache_data
+def load_data():
+    paths_to_try = [
+        "C:\\jfa_scraper\\franchise_data.csv",
+        "franchise_data.csv",
+        "/mount/src/jxperience-franchise-finder/franchise_data.csv"
+    ]
+    
+    for path in paths_to_try:
+        try:
+            df = pd.read_csv(path)
+            return df
+        except FileNotFoundError:
+            continue
+    
+    st.error("⚠️ CSV file not found.")
+    return pd.DataFrame()
 
-# Check API Key
-if not GROQ_API_KEY:
-    st.error("⚠️ APIキーが設定されていません。管理者にお問い合わせください。")
+df = load_data()
+
+if df.empty:
+    st.warning("⚠️ No data loaded.")
     st.stop()
 
-# Initialize AI Client
-client = OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
+# Helper Functions
+def get_confidence_badge(confidence):
+    if confidence == "YES":
+        return "✅ Confirmed"
+    elif confidence == "PROBABLE":
+        return " Probable"
+    elif confidence == "NEEDS_VERIFICATION":
+        return "⚠️ Verify"
+    else:
+        return " No"
 
-# --- INFO BOX ---
+# Pre-process dataframe
+df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence_badge)
+
+# SECURE API KEY
+GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
+
+if not GROQ_API_KEY:
+    st.warning("⚠️ API Key not configured.")
+
+client = OpenAI(
+    api_key=GROQ_API_KEY,
+    base_url="https://api.groq.com/openai/v1"
+)
+
+# --- HERO SECTION ---
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown("""
+        <div class="stat-card">
+            <span class="stat-number">63+</span>
+            <span class="stat-label">Japanese Franchises<br/>Analyzed</span>
+        </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown("""
+        <div class="stat-card">
+            <span class="stat-number">$100k-$800k</span>
+            <span class="stat-label">Investment Range<br/>(USD)</span>
+        </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown("""
+        <div class="stat-card">
+            <span class="stat-number">15+</span>
+            <span class="stat-label">Target Markets<br/>Across SE Asia, USA & Europe</span>
+        </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("---")
+
+# --- SIDEBAR FILTERS ---
+st.sidebar.markdown("### <span style='color:#0066cc'>JX</span>Perience", unsafe_allow_html=True)
+st.sidebar.markdown("---")
+
+# Search
+st.sidebar.markdown("#### 🔍 Search")
+search_term = st.sidebar.text_input("", placeholder="Type brand name...")
+st.sidebar.markdown("---")
+
+# Display Mode
+st.sidebar.markdown("####  Discovery Mode")
+display_mode = st.sidebar.radio(
+    "Show:",
+    ["💎 Hidden Gems (<50 overseas)", "📋 All Brands (A-Z)", "✅ Verified Only"],
+    help="Hidden Gems: Undiscovered brands with high growth potential"
+)
+st.sidebar.markdown("---")
+
+# Sort Control
+st.sidebar.markdown("#### 📊 Sort By")
+sort_by = st.sidebar.selectbox(
+    "Primary sort:",
+    ["Brand Name (A-Z)", "Investment (Low-High)", "Investment (High-Low)", 
+     "Franchise Fee (Low-High)", "Royalty % (Low-High)", 
+     "Japan Stores (Most)", "Overseas Stores (Least)"]
+)
+st.sidebar.markdown("---")
+
+# Category Filter
+st.sidebar.header("Filter by Category")
+selected_category = st.sidebar.multiselect(
+    "Select categories:", 
+    options=df['category'].unique(), 
+    default=df['category'].unique()
+)
+
+# --- FILTERING & SORTING LOGIC ---
+filtered_df = df[df['category'].isin(selected_category)].copy()
+
+# Apply Hidden Gems filter
+if "Hidden Gems" in display_mode:
+    overseas_nums = pd.to_numeric(filtered_df['stores_overseas'].str.extract('(\d+)')[0], errors='coerce').fillna(999)
+    filtered_df = filtered_df[overseas_nums < 50]
+
+# Apply Verified Only filter
+if "Verified Only" in display_mode:
+    filtered_df = filtered_df[filtered_df['overseas_franchise_confirmed'] == 'YES']
+
+# Apply sorting
+if "Investment (Low-High)" in sort_by:
+    filtered_df['sort_val'] = pd.to_numeric(filtered_df['investment_usd'].str.extract('(\d+)')[0], errors='coerce').fillna(999999)
+    filtered_df = filtered_df.sort_values('sort_val')
+    filtered_df = filtered_df.drop(columns=['sort_val'])
+elif "Investment (High-Low)" in sort_by:
+    filtered_df['sort_val'] = pd.to_numeric(filtered_df['investment_usd'].str.extract('(\d+)')[0], errors='coerce').fillna(0)
+    filtered_df = filtered_df.sort_values('sort_val', ascending=False)
+    filtered_df = filtered_df.drop(columns=['sort_val'])
+elif "Franchise Fee (Low-High)" in sort_by:
+    filtered_df = filtered_df.sort_values('franchise_fee_usd')
+elif "Royalty % (Low-High)" in sort_by:
+    filtered_df = filtered_df.sort_values('royalty_pct')
+elif "Japan Stores (Most)" in sort_by:
+    filtered_df['sort_val'] = pd.to_numeric(filtered_df['stores_japan'].str.extract('(\d+)')[0], errors='coerce').fillna(0)
+    filtered_df = filtered_df.sort_values('sort_val', ascending=False)
+    filtered_df = filtered_df.drop(columns=['sort_val'])
+elif "Overseas Stores (Least)" in sort_by:
+    filtered_df['sort_val'] = pd.to_numeric(filtered_df['stores_overseas'].str.extract('(\d+)')[0], errors='coerce').fillna(999)
+    filtered_df = filtered_df.sort_values('sort_val')
+    filtered_df = filtered_df.drop(columns=['sort_val'])
+else:
+    filtered_df = filtered_df.sort_values('brand_name')
+
+# Apply search
+if search_term:
+    filtered_df = filtered_df[filtered_df['brand_name'].str.contains(search_term, case=False, na=False)]
+
+# --- DISPLAY COUNT ---
+if "Hidden Gems" in display_mode:
+    st.subheader(f"💎 Found {len(filtered_df)} Hidden Gem Brands")
+else:
+    st.subheader(f"Found {len(filtered_df)} Expansion-Ready Brands")
+
+# --- DISCLAIMER ---
 st.markdown("""
-    <div class="info-box">
-        <strong>💡 ご利用方法：</strong><br>
-        1. ブランド名と日本語の紹介文（公式サイト、パンフレット、IR資料など）を貼り付けます<br>
-        2. 「AIで投資案件概要を生成」ボタンをクリック<br>
-        3. 生成された英語データを編集・確認<br>
-        4. データベースに保存 → 海外投資家向けプラットフォームに公開されます
+    <div class="disclaimer-box">
+        <strong>ℹ️ Disclaimer:</strong> All information sourced from public data. 
+        "✅ Confirmed" brands have verified overseas programs. JXPerience is not officially affiliated 
+        with listed brands unless marked "Verified Partner." Verify all details directly before investing.
     </div>
 """, unsafe_allow_html=True)
 
-# --- STEP 1: INPUT FORM ---
-with st.form("onboarding_form"):
-    st.subheader("1. ブランド情報入力")
-    brand_name_input = st.text_input("ブランド名（ローマ字または英語）", placeholder="例：Ichiran, Gogo Curry")
-    raw_text = st.text_area(
-        "日本語の紹介文を貼り付け", 
-        height=200, 
-        placeholder="貴社のフランチャイズ情報、投資条件、沿革などを日本語で貼り付けてください...",
-        help="AIが自動的に英訳し、投資金額・店舗数などの数値データを抽出します。"
-    )
+# --- DISPLAY TABLE ---
+display_df = filtered_df.copy()
+display_df['Franchise Fee'] = display_df['franchise_fee_usd'].apply(lambda x: f"${int(x):,}" if pd.notna(x) else 'N/A')
+display_df['Royalty %'] = display_df['royalty_pct'].apply(lambda x: f"{x}%" if pd.notna(x) else 'N/A')
+display_df['Website'] = display_df['website'].apply(lambda x: f"[🔗 Visit](https://{x})" if pd.notna(x) and x != '' else 'N/A')
+
+display_df = display_df.rename(columns={
+    'brand_name': 'Brand',
+    'category': 'Category',
+    'stores_japan': 'Japan Stores',
+    'stores_overseas': 'Overseas',
+    'investment_usd': 'Investment',
+    'target_markets': 'Target Markets',
+    'franchise_status': 'Status'
+})
+
+st.dataframe(
+    display_df[['Brand', 'Category', 'Japan Stores', 'Overseas', 'Investment', 'Franchise Fee', 'Royalty %', 'Target Markets', 'Website', 'Status']],
+    use_container_width=True,
+    hide_index=True
+)
+
+# --- INVESTOR EMAIL CAPTURE (General) ---
+st.markdown("---")
+st.markdown("""
+    <div class="email-capture-box">
+        <h3 style="margin-top:0;">📬 Get Early Access to New Brands</h3>
+        <p style="margin-bottom:20px;">Don't see what you're looking for? Get notified when we add new brands.</p>
+    </div>
+""", unsafe_allow_html=True)
+
+with st.form("notification_signup"):
+    col1, col2, col3 = st.columns([2, 2, 1])
+    with col1:
+        investor_email = st.text_input("Your Email", placeholder="investor@example.com")
+    with col2:
+        investor_category = st.selectbox("Interested Category", ["All Categories"] + list(df['category'].unique()))
+    with col3:
+        submit_notification = st.form_submit_button("🔔 Notify Me", use_container_width=True)
     
-    submitted = st.form_submit_button("✨ AIで英語の投資案件概要を生成")
-
-    if submitted:
-        if not brand_name_input or not raw_text:
-            st.error("ブランド名と紹介文の両方を入力してください。")
+    if submit_notification:
+        if not investor_email:
+            st.error("Please enter your email")
         else:
-            with st.spinner(" AIが翻訳・分析中..."):
-                try:
-                    prompt = f"""あなたは日本のフランチャイズ専門アナリスト兼翻訳家です。
-以下の日本語テキストを読み、海外投資家向けに最適な英語データを抽出・翻訳してください。
-数値データ（投資額、ロイヤリティなど）が明確でない場合は、業界標準に基づいて妥当な範囲を推定し、備考に「推定値」と明記してください。
+            st.success("✅ You're on the list!")
 
-出力は厳密に以下のJSON形式のみで返してください（マークダウンや説明文は不要）：
+# --- AI ASSESSMENT FORM ---
+st.markdown("---")
+st.subheader("Interested in a brand?")
+st.write("Fill out this form for an **AI-qualified assessment** of your fit.")
+
+# Initialize session state for the lead capture form
+if 'show_inquiry_form' not in st.session_state:
+    st.session_state['show_inquiry_form'] = False
+    st.session_state['selected_brand_for_inquiry'] = ""
+
+with st.form("contact_form"):
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        name = st.text_input("Your Name")
+        email = st.text_input("Email")
+        country = st.text_input("Your Country")
+    
+    with col2:
+        capital = st.selectbox("Available Capital (USD)", 
+                               ["< $100k", "$100k - $300k", "$300k - $500k", "> $500k"])
+        experience = st.radio("F&B Experience?", ["Yes", "No"])
+        timeline = st.selectbox("Timeline to Open", ["Immediate (< 6 months)", "6-12 months", "1-2 years", "Just researching"])
+    
+    selected_brand = st.selectbox("Which brand interests you?", filtered_df['brand_name'].tolist())
+    message = st.text_area("Additional Info (optional)", placeholder="Your background, location plans, etc.")
+    
+    submitted = st.form_submit_button(" Get AI Assessment")
+    
+    if submitted:
+        if not GROQ_API_KEY:
+            st.error("⚠️ API Key not configured.")
+        elif not name or not email:
+            st.error("⚠️ Please fill in name and email")
+        else:
+            brand_info = filtered_df[filtered_df['brand_name'] == selected_brand].iloc[0]
+            
+            with st.spinner("🤖 AI analyzing..."):
+                try:
+                    prompt = f"""You are a franchise investment analyst. Evaluate this investor:
+
+INVESTOR:
+- Name: {name}
+- Country: {country}
+- Capital: {capital}
+- F&B Experience: {experience}
+- Timeline: {timeline}
+- Info: {message if message else "None"}
+
+FRANCHISE:
+- Brand: {brand_info['brand_name']}
+- Category: {brand_info['category']}
+- Japan Stores: {brand_info['stores_japan']}
+- Overseas: {brand_info['stores_overseas']}
+- Investment: {brand_info['investment_usd']}
+- Fee: {brand_info['franchise_fee_usd']} USD
+- Royalty: {brand_info['royalty_pct']}%
+- Markets: {brand_info['target_markets']}
+- Status: {brand_info['franchise_status']}
+
+Return JSON:
 {{
-    "brand_name": "{brand_name_input}",
-    "category": "カテゴリ（例：Ramen, Sushi, Cafe, Fast Food）",
-    "stores_japan": "日本国内店舗数（例：100+）",
-    "stores_overseas": "海外店舗数（例：20+）",
-    "investment_usd": "総投資額USD（例：150k-300k）",
-    "franchise_fee_usd": "フランチャイズ手数料USD（例：50000）",
-    "royalty_pct": "ロイヤリティ％（例：5.0）",
-    "target_markets": "対象市場（例：SE Asia, USA, Europe）",
-    "website": "公式サイトURL（例：brand.com）",
-    "overseas_franchise_confirmed": "海外展開実績（YES / PROBABLE / NEEDS_VERIFICATION のいずれか）",
-    "expansion_type": "展開形態（Single-unit / Master Franchise / Joint Venture）",
-    "notes": "ブランドの強み・差別化ポイント（英語1文）"
+    "readiness_score": "High/Medium/Low",
+    "score_reasoning": "2-3 sentences",
+    "capital_fit": "Yes/No with explanation",
+    "market_fit": "Yes/No with explanation",
+    "strengths": ["list"],
+    "concerns": ["list"],
+    "recommendation": "One sentence"
 }}
 
-日本語テキスト：
-{raw_text}
-"""
+Be honest and direct."""
 
                     response = client.chat.completions.create(
                         model="llama-3.3-70b-versatile",
                         messages=[{"role": "user", "content": prompt}],
-                        temperature=0.3,
+                        temperature=0.7,
                         response_format={"type": "json_object"}
                     )
                     
-                    st.session_state['generated_data'] = json.loads(response.choices[0].message.content)
-                    st.session_state['ready_to_save'] = True
-
+                    ai_analysis = json.loads(response.choices[0].message.content)
+                    
+                    st.success("✅ AI Assessment Complete!")
+                    st.markdown("###  Your Investment Readiness Score")
+                    
+                    score = ai_analysis.get('readiness_score', 'N/A')
+                    if score == 'High':
+                        st.metric("Readiness Score", score, delta="Excellent fit!")
+                        st.balloons()
+                    elif score == 'Medium':
+                        st.metric("Readiness Score", score, delta="Good potential")
+                    else:
+                        st.metric("Readiness Score", score, delta="Needs development")
+                    
+                    st.markdown(f"**Analysis:** {ai_analysis.get('score_reasoning', 'N/A')}")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.info(f"💰 **Capital Fit:** {ai_analysis.get('capital_fit', 'N/A')}")
+                        st.info(f"🌍 **Market Fit:** {ai_analysis.get('market_fit', 'N/A')}")
+                    with col2:
+                        st.success("✅ **Strengths:**\n" + "\n".join(ai_analysis.get('strengths', [])))
+                        if ai_analysis.get('concerns'):
+                            st.warning("⚠️ **Concerns:**\n" + "\n".join(ai_analysis.get('concerns', [])))
+                    
+                    st.markdown(f"💡 **Recommendation:** {ai_analysis.get('recommendation', 'N/A')}")
+                    
+                    # Trigger the Inquiry Form
+                    st.session_state['show_inquiry_form'] = True
+                    st.session_state['selected_brand_for_inquiry'] = selected_brand
+                    
                 except Exception as e:
-                    st.error(f"AI処理エラー: {e}")
+                    st.error(f"❌ AI Analysis failed: {str(e)}")
 
-# --- STEP 2: REVIEW & SAVE ---
-if st.session_state.get('ready_to_save'):
+# --- LEAD CAPTURE / INQUIRY FORM (Appears after AI Assessment) ---
+if st.session_state.get('show_inquiry_form'):
     st.markdown("---")
-    st.subheader("2. データの確認・編集")
-    st.info("AIが生成した英語データを確認してください。投資家向けに公開される内容です。必要に応じて修正してから保存してください。")
+    st.markdown(f"""
+        <div class="inquiry-box">
+            <h3 style="margin-top:0; color:#0066cc;">🚀 Ready to contact {st.session_state['selected_brand_for_inquiry']}?</h3>
+            <p>
+                You have a <strong>{ai_analysis.get('readiness_score', 'Good')}</strong> fit. 
+                The next step is to connect with the franchisor. 
+                <br><br>
+                <strong>Get the Official Investment Prospectus & Contact Details</strong><br>
+                Fill out the form below to receive the full brochure and introduction package directly in your inbox.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
     
-    data = st.session_state['generated_data']
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        data['category'] = st.text_input("カテゴリ", data.get('category', ''))
-        data['stores_japan'] = st.text_input("日本国内店舗数", data.get('stores_japan', ''))
-        data['stores_overseas'] = st.text_input("海外店舗数", data.get('stores_overseas', ''))
-        data['investment_usd'] = st.text_input("総投資額（USD）", data.get('investment_usd', ''))
-        data['franchise_fee_usd'] = st.text_input("フランチャイズ手数料（USD）", data.get('franchise_fee_usd', ''))
-        data['royalty_pct'] = st.text_input("ロイヤリティ（％）", data.get('royalty_pct', ''))
-    
-    with col2:
-        data['target_markets'] = st.text_input("対象市場", data.get('target_markets', ''))
-        data['website'] = st.text_input("公式サイトURL", data.get('website', ''))
+    with st.form("inquiry_form"):
+        col1, col2 = st.columns(2)
+        with col1:
+            inquiry_name = st.text_input("Full Name", value=name if 'name' in locals() else "")
+            inquiry_email = st.text_input("Business Email", value=email if 'email' in locals() else "")
+        with col2:
+            inquiry_company = st.text_input("Company Name (Optional)")
+            inquiry_phone = st.text_input("Phone Number (Optional)")
         
-        overseas_options = ["YES", "PROBABLE", "NEEDS_VERIFICATION", "NO"]
-        current_overseas = str(data.get('overseas_franchise_confirmed', 'NEEDS_VERIFICATION')).upper().strip()
-        if current_overseas not in overseas_options:
-            current_overseas = 'NEEDS_VERIFICATION'
-        data['overseas_franchise_confirmed'] = st.selectbox("海外展開実績", overseas_options, index=overseas_options.index(current_overseas))
+        inquiry_msg = st.text_area(
+            "Message to Franchisor", 
+            placeholder=f"Hi, I am interested in opening a {st.session_state['selected_brand_for_inquiry']} franchise in {country if 'country' in locals() else 'my region'}. My available capital is {capital if 'capital' in locals() else 'competitive'}.",
+            height=100
+        )
         
-        expansion_options = ["Single-unit", "Master Franchise", "Joint Venture"]
-        current_expansion = str(data.get('expansion_type', 'Single-unit')).strip()
-        if 'Single' in current_expansion:
-            current_expansion = 'Single-unit'
-        elif 'Master' in current_expansion:
-            current_expansion = 'Master Franchise'
-        elif 'Joint' in current_expansion:
-            current_expansion = 'Joint Venture'
-        else:
-            current_expansion = 'Single-unit'
+        submit_inquiry = st.form_submit_button("📤 Send Inquiry & Get Prospectus", type="primary", use_container_width=True)
         
-        data['expansion_type'] = st.selectbox("展開形態", expansion_options, index=expansion_options.index(current_expansion))
-        data['notes'] = st.text_area("備考・ブランドの強み", data.get('notes', ''))
-
-    if st.button("✅ 確認してデータベースに保存", type="primary"):
-        try:
-            new_row = pd.DataFrame([data])
-            file_exists = os.path.isfile(CSV_PATH)
-            new_row.to_csv(CSV_PATH, mode='a', header=not file_exists, index=False, encoding='utf-8')
-            
-            st.success("✅ 保存完了！貴社ブランドがデータベースに追加されました。")
-            st.balloons()
-            
-            st.session_state['ready_to_save'] = False
-            st.session_state['generated_data'] = None
-            
-            st.info("「メインページに戻る」ボタンをクリックして、追加されたブランドをご確認ください。")
-            
-        except Exception as e:
-            st.error(f"保存エラー: {e}")
+        if submit_inquiry:
+            if not inquiry_email:
+                st.error("Please enter your email to receive the prospectus.")
+            else:
+                st.success("""
+                    ✅ **Inquiry Sent Successfully!**
+                    
+                    We have forwarded your profile to the franchisor. 
+                    You will receive the **Official Investment Prospectus** at your email shortly.
+                    
+                    <em>A JXPerience consultant will also reach out within 24 hours to assist you.</em>
+                """)
+                st.balloons()
+                st.session_state['show_inquiry_form'] = False # Hide form after success
 
 # Footer
 st.markdown("---")
-st.markdown("<div style='text-align: center; color: #888; font-size: 0.85rem;'>© 2026 <span style='color:#0066cc'>JX</span>Perience | 日本フランチャイズ海外展開プラットフォーム</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #888; font-size: 0.85rem;'>© 2026 <span style='color:#0066cc'>JX</span>Perience | Japanese Franchise Overseas Expansion Platform</div>", unsafe_allow_html=True)

@@ -44,16 +44,16 @@ st.markdown("""
         font-weight: 700; font-size: 1.5rem; color: white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    .logo-wrapper {
+    .logo-container {
         width: 60px; height: 60px;
-        display: flex; align-items: center; justify-content: center;
         background: white; border-radius: 10px;
         border: 2px solid #e0e0e0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        padding: 5px;
     }
-    .logo-wrapper img {
-        width: 50px; height: 50px;
+    .logo-container img {
+        max-width: 100%; max-height: 100%;
         object-fit: contain;
     }
     </style>
@@ -81,39 +81,27 @@ if df.empty:
 if 'selected_brand' in st.session_state:
     del st.session_state['selected_brand']
 
-# ========== LOGO FUNCTION ==========
+# ========== AUTOMATIC LOGO FUNCTION ==========
 def get_logo_html(brand_name, website=None):
-    """
-    Returns HTML with logo that auto-falls back to initials
-    """
-    if not brand_name:
-        return None
-    
     initials = get_brand_initials(brand_name)
     brand_color = get_brand_color(brand_name)
     
-    # Try to get logo URL
+    # Get logo URL from Clearbit
     logo_url = None
     if website and pd.notna(website):
         domain = str(website).replace('https://', '').replace('http://', '').split('/')[0].replace('www.', '')
         if domain:
-            # Use Clearbit - most reliable
             logo_url = f"https://logo.clearbit.com/{domain}"
     
     if logo_url:
-        # Return image with fallback to initials
         return f'''
-        <div class="logo-wrapper">
-            <img 
-                src="{logo_url}" 
-                alt="{brand_name}"
-                onerror="this.parentElement.innerHTML='<div class=\\'brand-initial\\' style=\\'background-color: {brand_color};\\'>{initials}</div>'"
-            />
+        <div class="logo-container">
+            <img src="{logo_url}" alt="{brand_name}" 
+                 onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'brand-initial\' style=\'background-color: {brand_color};\'>{initials}</div>';">
         </div>
         '''
     else:
-        # No logo available, show initials
-        return f'''<div class="brand-initial" style="background-color: {brand_color};">{initials}</div>'''
+        return f'<div class="brand-initial" style="background-color: {brand_color};">{initials}</div>'
 
 def get_brand_initials(brand_name):
     if not brand_name:
@@ -194,13 +182,13 @@ st.subheader(f"💎 Found {len(filtered_df)} Brands")
 
 st.markdown("""
     <div class="disclaimer-box">
-        <strong>ℹ️ Disclaimer:</strong> All information sourced from public data. JXPerience is not officially affiliated with listed brands.
+        <strong>️ Disclaimer:</strong> All information sourced from public data. JXPerience is not officially affiliated with listed brands.
     </div>
 """, unsafe_allow_html=True)
 
 st.markdown("### 📊 Franchise Directory")
 
-# Display with logos
+# Display with automatic logos
 for idx, row in filtered_df.iterrows():
     brand_name = row['brand_name']
     website = row.get('website', '')
@@ -217,7 +205,7 @@ for idx, row in filtered_df.iterrows():
     
     with col3:
         st.write(f"🇯🇵 {row['stores_japan']} stores")
-        st.write(f" {row['stores_overseas']} overseas")
+        st.write(f"🌏 {row['stores_overseas']} overseas")
     
     with col4:
         st.write(f"💰 {row['investment_usd']}")
@@ -229,7 +217,7 @@ for idx, row in filtered_df.iterrows():
             st.session_state['selected_brand'] = brand_name
             st.switch_page("pages/3_Brand_Profile.py")
 
-# [Keep rest of your existing code - email capture, AI form, inquiry form, footer]
+# [Keep rest of your existing code - email capture, AI form, inquiry form]
 
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #888; font-size: 0.85rem;'>© 2026 <span style='color:#0066cc'>JX</span>Perience | Japanese Franchise Overseas Expansion Platform</div>", unsafe_allow_html=True)

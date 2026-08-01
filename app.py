@@ -14,7 +14,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom styling
 st.markdown("""
     <style>
     .main-header { font-size: 2.5rem; font-weight: 700; color: #1f1f1f; }
@@ -39,25 +38,20 @@ st.markdown("""
         border-radius: 16px; padding: 30px; margin: 20px 0;
         border: 2px solid #0066cc;
     }
-    .brand-logo {
-        width: 50px;
-        height: 50px;
-        border-radius: 8px;
-        object-fit: contain;
-        background: white;
-        padding: 5px;
-        border: 1px solid #e0e0e0;
-    }
     .brand-initial {
-        width: 50px;
-        height: 50px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1.2rem;
-        color: white;
+        width: 50px; height: 50px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 1.2rem; color: white;
+    }
+    .logo-container {
+        width: 50px; height: 50px;
+        display: flex; align-items: center; justify-content: center;
+        background: white; border-radius: 8px;
+        border: 1px solid #e0e0e0; padding: 5px;
+    }
+    .logo-container img {
+        max-width: 100%; max-height: 100%;
+        object-fit: contain;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -84,43 +78,53 @@ if df.empty:
 if 'selected_brand' in st.session_state:
     del st.session_state['selected_brand']
 
-# ========== IMPROVED LOGO FUNCTION ==========
-def get_brand_logo_url(brand_name, website=None):
+# ========== AUTOMATIC LOGO FUNCTION ==========
+def get_logo_html(brand_name, website=None):
     """
-    Get brand logo using multiple reliable sources
-    Returns URL or None
+    Returns HTML with logo image and automatic fallback to initials.
+    Uses multiple sources - browser tries each one.
     """
-    # Method 1: Brandfetch API (free, no key needed, very reliable)
-    if brand_name:
-        brand_slug = brand_name.replace(' ', '').lower()
-        brandfetch_url = f"https://cdn.brandfetch.io/{brand_slug}/logo.png"
-        # Test if URL works
-        try:
-            response = requests.head(brandfetch_url, timeout=3)
-            if response.status_code == 200:
-                return brandfetch_url
-        except:
-            pass
+    if not brand_name:
+        return None
     
-    # Method 2: Clearbit Logo API
+    initials = get_brand_initials(brand_name)
+    brand_color = get_brand_color(brand_name)
+    
+    # Build list of logo URLs to try
+    logo_urls = []
+    
+    # Source 1: Logo.dev (very reliable)
     if website and pd.notna(website):
-        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0]
+        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0].replace('www.', '')
         if domain:
-            clearbit_url = f"https://logo.clearbit.com/{domain}"
-            try:
-                response = requests.head(clearbit_url, timeout=3)
-                if response.status_code == 200:
-                    return clearbit_url
-            except:
-                pass
+            logo_urls.append(f"https://img.logo.dev/{domain}?token=pk_test_123")
+            logo_urls.append(f"https://logo.clearbit.com/{domain}")
     
-    # Method 3: Google favicon
+    # Source 2: Google favicon (always works, but small)
     if website and pd.notna(website):
-        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0]
+        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0].replace('www.', '')
         if domain:
-            return f"https://www.google.com/s2/favicons?domain={domain}&sz=128"
+            logo_urls.append(f"https://www.google.com/s2/favicons?domain={domain}&sz=128")
     
-    return None
+    # If no URLs, just show initials
+    if not logo_urls:
+        return f'''<div class="brand-initial" style="background-color: {brand_color};">{initials}</div>'''
+    
+    # Build HTML with fallback chain
+    # The first image tries to load; if it fails, onerror replaces it with initials
+    primary_url = logo_urls[0]
+    
+    html = f'''
+    <div class="logo-container" id="logo-{brand_name.replace(' ', '')}">
+        <img 
+            src="{primary_url}" 
+            alt="{brand_name}"
+            onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'brand-initial\\' style=\\'background-color: {brand_color};\\'>{initials}</div>';"
+            style="max-width: 40px; max-height: 40px;"
+        />
+    </div>
+    '''
+    return html
 
 def get_brand_initials(brand_name):
     if not brand_name:
@@ -168,7 +172,7 @@ st.sidebar.header("🔍 Search")
 search_term = st.sidebar.text_input("", placeholder="Type brand name...")
 
 st.sidebar.header("💎 Discovery Mode")
-display_mode = st.sidebar.radio("Show:", ["💎 Hidden Gems (<50 overseas)", "📋 All Brands (A-Z)", "✅ Verified Only"])
+display_mode = st.sidebar.radio("Show:", ["💎 Hidden Gems (<50 overseas)", " All Brands (A-Z)", "✅ Verified Only"])
 
 st.sidebar.header("📊 Sort By")
 sort_by = st.sidebar.selectbox("Primary sort:", ["Brand Name (A-Z)", "Investment (Low-High)", "Investment (High-Low)", "Franchise Fee (Low-High)"])
@@ -197,7 +201,7 @@ else:
 if search_term:
     filtered_df = filtered_df[filtered_df['brand_name'].str.contains(search_term, case=False, na=False)]
 
-st.subheader(f"💎 Found {len(filtered_df)} Brands")
+st.subheader(f" Found {len(filtered_df)} Brands")
 
 st.markdown("""
     <div class="disclaimer-box">
@@ -207,34 +211,16 @@ st.markdown("""
 
 st.markdown("### 📊 Franchise Directory")
 
-# Display with logos
+# Display with automatic logos
 for idx, row in filtered_df.iterrows():
     brand_name = row['brand_name']
     website = row.get('website', '')
-    logo_url = get_brand_logo_url(brand_name, website)
-    initials = get_brand_initials(brand_name)
-    brand_color = get_brand_color(brand_name)
+    logo_html = get_logo_html(brand_name, website)
     
     col1, col2, col3, col4, col5 = st.columns([1, 3, 2, 2, 1])
     
     with col1:
-        if logo_url:
-            # Use st.image with error handling
-            try:
-                st.image(logo_url, width=50, use_column_width=False, output_format='auto')
-            except Exception as e:
-                # Fallback to initials
-                st.markdown(f"""
-                    <div class="brand-initial" style="background-color: {brand_color};">
-                        {initials}
-                    </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-                <div class="brand-initial" style="background-color: {brand_color};">
-                    {initials}
-                </div>
-            """, unsafe_allow_html=True)
+        st.markdown(logo_html, unsafe_allow_html=True)
     
     with col2:
         st.markdown(f"**{brand_name}**")
@@ -254,8 +240,7 @@ for idx, row in filtered_df.iterrows():
             st.session_state['selected_brand'] = brand_name
             st.switch_page("pages/3_Brand_Profile.py")
 
-# Rest of the code (email capture, AI form, etc.) remains the same...
-# [Keep all the existing code from your current app.py below this point]
+# [Keep rest of your code - email capture, AI form, inquiry form, footer]
 
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #888; font-size: 0.85rem;'>© 2026 <span style='color:#0066cc'>JX</span>Perience | Japanese Franchise Overseas Expansion Platform</div>", unsafe_allow_html=True)

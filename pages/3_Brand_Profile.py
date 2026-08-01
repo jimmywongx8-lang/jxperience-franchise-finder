@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Brand Profile | JXPerience", page_icon="🔴", layout="wide")
+st.set_page_config(page_title="Brand Profile | JXPerience", page_icon="", layout="wide")
 
 st.markdown("""
     <style>
@@ -19,8 +19,21 @@ st.markdown("""
     .stat-box { display: inline-block; background: #f5f5f5; padding: 15px 25px; border-radius: 8px; margin: 5px; text-align: center; }
     .stat-value { font-size: 1.5rem; font-weight: 700; color: #0066cc; }
     .stat-label { font-size: 0.85rem; color: #666; }
+    .back-btn {
+        background-color: #0066cc; color: white; border: none;
+        padding: 10px 20px; border-radius: 8px; cursor: pointer;
+        font-weight: 600; margin-bottom: 20px;
+    }
+    .back-btn:hover { background-color: #0052a3; }
     </style>
 """, unsafe_allow_html=True)
+
+# Back button at top
+col1, col2 = st.columns([1, 5])
+with col1:
+    if st.button("️ Back to All Brands", key="back_button"):
+        st.session_state['selected_brand'] = None
+        st.switch_page("app.py")
 
 @st.cache_data
 def load_data():
@@ -33,9 +46,6 @@ def load_data():
     return pd.DataFrame()
 
 df = load_data()
-
-# Navigation - FIXED: Use link to main page
-st.page_link("app.py", label="⬅️ Back to All Brands", icon="🏠")
 
 # Get brand from session state or query params
 brand_name = st.session_state.get('selected_brand', '')
@@ -94,7 +104,7 @@ try:
 except:
     pass
 
-# Expansion - FIXED: Use .get() to avoid KeyError
+# Expansion
 st.markdown("### 🌍 Expansion Information")
 col1, col2 = st.columns(2)
 with col1:
@@ -113,7 +123,6 @@ with col2:
     except:
         website = ''
     
-    # FIXED: Use .get() for franchise_status
     try:
         status = brand_data.get('franchise_status', 'N/A')
         if pd.isna(status):
@@ -125,7 +134,7 @@ with col2:
 
 # CTA
 st.markdown("---")
-st.markdown("""<div class="info-card" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #0066cc;"><h3 style="color: #0066cc;">🚀 Ready to Learn More?</h3><p>Get the complete investment prospectus and connect directly with the franchisor.</p></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="info-card" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #0066cc;"><h3 style="color: #0066cc;"> Ready to Learn More?</h3><p>Get the complete investment prospectus and connect directly with the franchisor.</p></div>""", unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 with col1:

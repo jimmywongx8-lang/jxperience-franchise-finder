@@ -74,18 +74,6 @@ st.markdown("""
         margin: 20px 0;
         border: 2px solid #0066cc;
     }
-    .brand-card {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 20px;
-        margin: 10px 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        transition: box-shadow 0.2s;
-    }
-    .brand-card:hover {
-        box-shadow: 0 4px 12px rgba(0,102,204,0.15);
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -121,7 +109,7 @@ if df.empty:
 def get_confidence_badge(confidence):
     if confidence == "YES": return "✅ Confirmed"
     elif confidence == "PROBABLE": return "🟡 Probable"
-    elif confidence == "NEEDS_VERIFICATION": return "️ Verify"
+    elif confidence == "NEEDS_VERIFICATION": return "⚠️ Verify"
     return "❌ No"
 
 df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence_badge)
@@ -251,7 +239,7 @@ for idx, row in filtered_df.iterrows():
         
         with col2:
             st.write(f"🇯🇵 {row['stores_japan']} stores")
-            st.write(f"🌏 {row['stores_overseas']} overseas")
+            st.write(f" {row['stores_overseas']} overseas")
         
         with col3:
             st.write(f"💰 {row['investment_usd']}")
@@ -259,9 +247,10 @@ for idx, row in filtered_df.iterrows():
             st.write(f"Fee: {fee_val}")
         
         with col4:
-            if st.button("🔍 View Details", key=f"view_{idx}"):
+            if st.button(" View Details", key=f"view_{idx}"):
                 st.session_state['selected_brand'] = row['brand_name']
-                st.switch_page("3_Brand_Profile.py")
+                # ✅ FIXED: Must include "pages/" folder
+                st.switch_page("pages/3_Brand_Profile.py")
 
 # --- INVESTOR EMAIL CAPTURE (General) ---
 st.markdown("---")
@@ -279,7 +268,7 @@ with st.form("notification_signup"):
     with col2:
         investor_category = st.selectbox("Interested Category", ["All Categories"] + list(df['category'].unique()))
     with col3:
-        submit_notification = st.form_submit_button("🔔 Notify Me", use_container_width=True)
+        submit_notification = st.form_submit_button(" Notify Me", use_container_width=True)
     
     if submit_notification:
         if not investor_email:
@@ -328,9 +317,9 @@ with st.form("contact_form"):
     
     if submitted:
         if not GROQ_API_KEY:
-            st.error("⚠️ API Key not configured.")
+            st.error("️ API Key not configured.")
         elif not name or not email:
-            st.error("⚠️ Please fill in name and email")
+            st.error("️ Please fill in name and email")
         else:
             brand_info = filtered_df[filtered_df['brand_name'] == selected_brand].iloc[0]
             
@@ -396,11 +385,11 @@ Be honest and direct."""
                     col1, col2 = st.columns(2)
                     with col1:
                         st.info(f"💰 **Capital Fit:** {ai_analysis.get('capital_fit', 'N/A')}")
-                        st.info(f" **Market Fit:** {ai_analysis.get('market_fit', 'N/A')}")
+                        st.info(f"🌍 **Market Fit:** {ai_analysis.get('market_fit', 'N/A')}")
                     with col2:
                         st.success("✅ **Strengths:**\n" + "\n".join(ai_analysis.get('strengths', [])))
                         if ai_analysis.get('concerns'):
-                            st.warning("⚠️ **Concerns:**\n" + "\n".join(ai_analysis.get('concerns', [])))
+                            st.warning("️ **Concerns:**\n" + "\n".join(ai_analysis.get('concerns', [])))
                     
                     st.markdown(f"💡 **Recommendation:** {ai_analysis.get('recommendation', 'N/A')}")
                     

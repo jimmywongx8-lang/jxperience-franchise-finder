@@ -24,16 +24,11 @@ st.markdown("""
         color: white; padding: 20px; border-radius: 12px; text-align: center; margin: 10px;
     }
     .stat-number { font-size: 2rem; font-weight: 700; display: block; }
+    .stat-label { font-size: 0.85rem; opacity: 0.9; }
     .disclaimer-box {
         background-color: #fff3cd; border-left: 4px solid #ffc107;
         padding: 12px 16px; margin: 20px 0;
     }
-    .view-btn {
-        background-color: #0066cc; color: white; border: none;
-        padding: 8px 16px; border-radius: 6px; cursor: pointer;
-        font-weight: 600; text-decoration: none; display: inline-block;
-    }
-    .view-btn:hover { background-color: #0052a3; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -61,7 +56,7 @@ if df.empty:
 # Helper
 def get_confidence_badge(confidence):
     if confidence == "YES": return "✅ Confirmed"
-    elif confidence == "PROBABLE": return " Probable"
+    elif confidence == "PROBABLE": return "🟡 Probable"
     elif confidence == "NEEDS_VERIFICATION": return "⚠️ Verify"
     return "❌ No"
 
@@ -86,13 +81,13 @@ with col3:
 st.markdown("---")
 
 # Sidebar
-st.sidebar.header("🔍 Search")
+st.sidebar.header(" Search")
 search_term = st.sidebar.text_input("", placeholder="Type brand name...")
 
 st.sidebar.header("💎 Discovery Mode")
 display_mode = st.sidebar.radio("Show:", ["💎 Hidden Gems (<50 overseas)", "📋 All Brands (A-Z)", "✅ Verified Only"])
 
-st.sidebar.header("📊 Sort By")
+st.sidebar.header(" Sort By")
 sort_by = st.sidebar.selectbox("Primary sort:", ["Brand Name (A-Z)", "Investment (Low-High)", "Investment (High-Low)", "Franchise Fee (Low-High)"])
 
 st.sidebar.header("Filter by Category")
@@ -130,10 +125,8 @@ st.markdown("""
 
 st.markdown("### 📊 Franchise Directory")
 
-# Display with clickable links using HTML
+# Display with proper navigation buttons
 for idx, row in filtered_df.iterrows():
-    brand_url = f"?brand={row['brand_name'].replace(' ', '%20')}"
-    
     col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
     
     with col1:
@@ -142,7 +135,7 @@ for idx, row in filtered_df.iterrows():
     
     with col2:
         st.write(f"🇯🇵 {row['stores_japan']} stores")
-        st.write(f"🌏 {row['stores_overseas']} overseas")
+        st.write(f" {row['stores_overseas']} overseas")
     
     with col3:
         st.write(f"💰 {row['investment_usd']}")
@@ -150,26 +143,23 @@ for idx, row in filtered_df.iterrows():
         st.write(f"Fee: {fee_val}")
     
     with col4:
-        # Use a link instead of switch_page
-        st.markdown(f'<a href="{brand_url}" class="view-btn">🔍 View Details</a>', unsafe_allow_html=True)
+        # Use st.page_link for proper navigation
+        st.page_link(
+            "pages/3_Brand_Profile.py",
+            label="🔍 View Details",
+            icon="🔍"
+        )
+        # Store the brand name in session state when clicked
+        st.session_state[f'brand_{idx}'] = row['brand_name']
 
-# Check if brand is selected via URL
-if 'brand' in st.query_params:
-    brand_name = st.query_params['brand']
-    st.session_state['selected_brand'] = brand_name
-    
-    # Redirect to brand profile page
-    st.info(f"🔍 Loading profile for **{brand_name}**...")
-    st.markdown(f"""
-        <div style="text-align: center; margin: 40px;">
-            <a href="/3_Brand_Profile?brand={brand_name}" class="view-btn" style="font-size: 1.2rem; padding: 15px 30px;">
-                Click here to view brand profile →
-            </a>
-        </div>
-    """, unsafe_allow_html=True)
+# Check if any brand button was clicked
+for idx in range(len(filtered_df)):
+    if st.session_state.get(f'brand_{idx}'):
+        st.session_state['selected_brand'] = st.session_state[f'brand_{idx}']
+        st.switch_page("pages/3_Brand_Profile.py")
 
 # Rest of your AI assessment and inquiry forms here...
-# (Keep the existing code)
+# (Keep the existing code from your current app.py)
 
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #888;'>© 2026 JXPerience</div>", unsafe_allow_html=True)

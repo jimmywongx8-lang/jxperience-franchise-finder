@@ -26,27 +26,23 @@ st.markdown("""
         font-weight: 700; font-size: 3rem; color: white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    .logo-large-wrapper {
+    .logo-large-container {
         width: 120px; height: 120px;
-        display: flex; align-items: center; justify-content: center;
         background: white; border-radius: 12px;
         border: 2px solid #e0e0e0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        padding: 10px;
     }
-    .logo-large-wrapper img {
-        width: 100px; height: 100px;
+    .logo-large-container img {
+        max-width: 100%; max-height: 100%;
         object-fit: contain;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# ========== LOGO FUNCTION ==========
+# ========== AUTOMATIC LOGO FUNCTION ==========
 def get_logo_html_large(brand_name, website=None):
-    """Returns HTML with large logo and fallback"""
-    if not brand_name:
-        return None
-    
     initials = get_brand_initials(brand_name)
     brand_color = get_brand_color(brand_name)
     
@@ -58,16 +54,13 @@ def get_logo_html_large(brand_name, website=None):
     
     if logo_url:
         return f'''
-        <div class="logo-large-wrapper">
-            <img 
-                src="{logo_url}" 
-                alt="{brand_name}"
-                onerror="this.parentElement.innerHTML='<div class=\\'brand-initial-large\\' style=\\'background-color: {brand_color};\\'>{initials}</div>'"
-            />
+        <div class="logo-large-container">
+            <img src="{logo_url}" alt="{brand_name}" 
+                 onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'brand-initial-large\' style=\'background-color: {brand_color};\'>{initials}</div>';">
         </div>
         '''
     else:
-        return f'''<div class="brand-initial-large" style="background-color: {brand_color};">{initials}</div>'''
+        return f'<div class="brand-initial-large" style="background-color: {brand_color};">{initials}</div>'
 
 def get_brand_initials(brand_name):
     if not brand_name:

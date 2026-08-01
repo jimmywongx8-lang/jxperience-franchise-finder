@@ -21,20 +21,21 @@ st.markdown("""
     .stat-value { font-size: 1.5rem; font-weight: 700; color: #0066cc; }
     .stat-label { font-size: 0.85rem; color: #666; }
     .brand-initial-large {
-        width: 100px; height: 100px; border-radius: 12px;
+        width: 120px; height: 120px; border-radius: 12px;
         display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: 2.5rem; color: white;
+        font-weight: 700; font-size: 3rem; color: white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    .logo-large-container {
-        width: 100px; height: 100px;
+    .logo-large-wrapper {
+        width: 120px; height: 120px;
         display: flex; align-items: center; justify-content: center;
         background: white; border-radius: 12px;
-        border: 2px solid #e0e0e0; padding: 10px;
+        border: 2px solid #e0e0e0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
     }
-    .logo-large-container img {
-        max-width: 100%; max-height: 100%;
+    .logo-large-wrapper img {
+        width: 100px; height: 100px;
         object-fit: contain;
     }
     </style>
@@ -42,37 +43,31 @@ st.markdown("""
 
 # ========== LOGO FUNCTION ==========
 def get_logo_html_large(brand_name, website=None):
-    """Returns HTML with large logo and automatic fallback"""
+    """Returns HTML with large logo and fallback"""
     if not brand_name:
         return None
     
     initials = get_brand_initials(brand_name)
     brand_color = get_brand_color(brand_name)
     
-    logo_urls = []
-    
+    logo_url = None
     if website and pd.notna(website):
         domain = str(website).replace('https://', '').replace('http://', '').split('/')[0].replace('www.', '')
         if domain:
-            logo_urls.append(f"https://logo.clearbit.com/{domain}")
-            logo_urls.append(f"https://www.google.com/s2/favicons?domain={domain}&sz=256")
+            logo_url = f"https://logo.clearbit.com/{domain}"
     
-    if not logo_urls:
+    if logo_url:
+        return f'''
+        <div class="logo-large-wrapper">
+            <img 
+                src="{logo_url}" 
+                alt="{brand_name}"
+                onerror="this.parentElement.innerHTML='<div class=\\'brand-initial-large\\' style=\\'background-color: {brand_color};\\'>{initials}</div>'"
+            />
+        </div>
+        '''
+    else:
         return f'''<div class="brand-initial-large" style="background-color: {brand_color};">{initials}</div>'''
-    
-    primary_url = logo_urls[0]
-    
-    html = f'''
-    <div class="logo-large-container" id="logo-large-{brand_name.replace(' ', '')}">
-        <img 
-            src="{primary_url}" 
-            alt="{brand_name}"
-            onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'brand-initial-large\\' style=\\'background-color: {brand_color};\\'>{initials}</div>';"
-            style="max-width: 80px; max-height: 80px;"
-        />
-    </div>
-    '''
-    return html
 
 def get_brand_initials(brand_name):
     if not brand_name:
@@ -195,7 +190,7 @@ with col2:
     except:
         status = 'N/A'
     
-    st.markdown(f"""<div class="info-card"><h3>Website</h3><p><a href="https://{website}" target="_blank" style="color: #0066cc;"> {website if website else 'N/A'}</a></p><h3 style="margin-top: 20px;">Verification Status</h3><p>{status}</p></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="info-card"><h3>Website</h3><p><a href="https://{website}" target="_blank" style="color: #0066cc;">🔗 {website if website else 'N/A'}</a></p><h3 style="margin-top: 20px;">Verification Status</h3><p>{status}</p></div>""", unsafe_allow_html=True)
 
 # CTA
 st.markdown("---")

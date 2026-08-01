@@ -114,11 +114,11 @@ def get_confidence_badge(confidence):
     if confidence == "YES":
         return "✅ Confirmed"
     elif confidence == "PROBABLE":
-        return " Probable"
+        return "🟡 Probable"
     elif confidence == "NEEDS_VERIFICATION":
         return "⚠️ Verify"
     else:
-        return " No"
+        return "❌ No"
 
 # Pre-process dataframe
 df['franchise_status'] = df['overseas_franchise_confirmed'].apply(get_confidence_badge)
@@ -173,10 +173,10 @@ search_term = st.sidebar.text_input("", placeholder="Type brand name...")
 st.sidebar.markdown("---")
 
 # Display Mode
-st.sidebar.markdown("####  Discovery Mode")
+st.sidebar.markdown("#### 💎 Discovery Mode")
 display_mode = st.sidebar.radio(
     "Show:",
-    ["💎 Hidden Gems (<50 overseas)", "📋 All Brands (A-Z)", "✅ Verified Only"],
+    ["💎 Hidden Gems (<50 overseas)", " All Brands (A-Z)", "✅ Verified Only"],
     help="Hidden Gems: Undiscovered brands with high growth potential"
 )
 st.sidebar.markdown("---")
@@ -254,11 +254,16 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- DISPLAY TABLE ---
+# --- DISPLAY TABLE WITH PROFILE LINKS ---
 display_df = filtered_df.copy()
 display_df['Franchise Fee'] = display_df['franchise_fee_usd'].apply(lambda x: f"${int(x):,}" if pd.notna(x) else 'N/A')
 display_df['Royalty %'] = display_df['royalty_pct'].apply(lambda x: f"{x}%" if pd.notna(x) else 'N/A')
-display_df['Website'] = display_df['website'].apply(lambda x: f"[ Visit](https://{x})" if pd.notna(x) and x != '' else 'N/A')
+display_df['Website'] = display_df['website'].apply(lambda x: f"[🔗 Visit](https://{x})" if pd.notna(x) and x != '' else 'N/A')
+
+# Add clickable profile links
+display_df['Profile'] = display_df['brand_name'].apply(
+    lambda x: f"[🔍 View](/Brand_Profile?brand={x.replace(' ', '%20')})"
+)
 
 display_df = display_df.rename(columns={
     'brand_name': 'Brand',
@@ -271,9 +276,12 @@ display_df = display_df.rename(columns={
 })
 
 st.dataframe(
-    display_df[['Brand', 'Category', 'Japan Stores', 'Overseas', 'Investment', 'Franchise Fee', 'Royalty %', 'Target Markets', 'Website', 'Status']],
+    display_df[['Profile', 'Brand', 'Category', 'Japan Stores', 'Overseas', 'Investment', 'Franchise Fee', 'Royalty %', 'Target Markets', 'Website', 'Status']],
     use_container_width=True,
-    hide_index=True
+    hide_index=True,
+    column_config={
+        "Profile": st.column_config.LinkColumn("Details", width="small"),
+    }
 )
 
 # --- INVESTOR EMAIL CAPTURE (General) ---
@@ -292,7 +300,7 @@ with st.form("notification_signup"):
     with col2:
         investor_category = st.selectbox("Interested Category", ["All Categories"] + list(df['category'].unique()))
     with col3:
-        submit_notification = st.form_submit_button(" Notify Me", use_container_width=True)
+        submit_notification = st.form_submit_button("🔔 Notify Me", use_container_width=True)
     
     if submit_notification:
         if not investor_email:
@@ -315,6 +323,9 @@ if 'last_ai_analysis' not in st.session_state:
 if 'last_investor_data' not in st.session_state:
     st.session_state['last_investor_data'] = {}
 
+# Pre-select brand if coming from profile page
+default_brand = st.session_state.get('selected_brand', filtered_df['brand_name'].iloc[0] if not filtered_df.empty else "")
+
 with st.form("contact_form"):
     col1, col2 = st.columns(2)
     
@@ -329,14 +340,15 @@ with st.form("contact_form"):
         experience = st.radio("F&B Experience?", ["Yes", "No"])
         timeline = st.selectbox("Timeline to Open", ["Immediate (< 6 months)", "6-12 months", "1-2 years", "Just researching"])
     
-    selected_brand = st.selectbox("Which brand interests you?", filtered_df['brand_name'].tolist())
+    selected_brand = st.selectbox("Which brand interests you?", filtered_df['brand_name'].tolist(), 
+                                  index=filtered_df['brand_name'].tolist().index(default_brand) if default_brand in filtered_df['brand_name'].tolist() else 0)
     message = st.text_area("Additional Info (optional)", placeholder="Your background, location plans, etc.")
     
     submitted = st.form_submit_button("🚀 Get AI Assessment")
     
     if submitted:
         if not GROQ_API_KEY:
-            st.error("️ API Key not configured.")
+            st.error("⚠️ API Key not configured.")
         elif not name or not email:
             st.error("⚠️ Please fill in name and email")
         else:
@@ -404,7 +416,7 @@ Be honest and direct."""
                     col1, col2 = st.columns(2)
                     with col1:
                         st.info(f"💰 **Capital Fit:** {ai_analysis.get('capital_fit', 'N/A')}")
-                        st.info(f"🌍 **Market Fit:** {ai_analysis.get('market_fit', 'N/A')}")
+                        st.info(f" **Market Fit:** {ai_analysis.get('market_fit', 'N/A')}")
                     with col2:
                         st.success("✅ **Strengths:**\n" + "\n".join(ai_analysis.get('strengths', [])))
                         if ai_analysis.get('concerns'):
@@ -432,7 +444,7 @@ if st.session_state.get('show_inquiry_form') and st.session_state.get('last_ai_a
     
     st.markdown(f"""
         <div class="inquiry-box">
-            <h3 style="margin-top:0; color:#0066cc;">🚀 Ready to contact {brand_name}?</h3>
+            <h3 style="margin-top:0; color:#0066cc;"> Ready to contact {brand_name}?</h3>
             <p>
                 You have a <strong>{ai_score}</strong> fit. 
                 The next step is to connect with the franchisor. 
@@ -466,12 +478,10 @@ if st.session_state.get('show_inquiry_form') and st.session_state.get('last_ai_a
                 st.error("Please enter your email to receive the prospectus.")
             else:
                 try:
-                    # --- ACTUAL EMAIL SENDING LOGIC ---
                     admin_email = st.secrets.get("YOUR_GMAIL", "jxperience.info@gmail.com")
                     app_password = st.secrets.get("YOUR_APP_PASSWORD", "")
                     
                     if app_password and len(app_password) > 10:
-                        # Create email message
                         msg = MIMEMultipart()
                         msg['From'] = admin_email
                         msg['To'] = admin_email
@@ -502,7 +512,6 @@ Experience: {prev_data.get('experience', 'N/A')}
 """
                         msg.attach(MIMEText(body, 'plain'))
                         
-                        # Send email via Gmail SMTP
                         server = smtplib.SMTP('smtp.gmail.com', 587)
                         server.starttls()
                         server.login(admin_email, app_password)
@@ -527,7 +536,7 @@ Experience: {prev_data.get('experience', 'N/A')}
                                 }
                                 requests.post(webhook_url, json=payload, timeout=5)
                             except:
-                                pass  # Silent fail if webhook doesn't work
+                                pass
 
                         st.success("""
                             ✅ **Inquiry Sent Successfully!**
@@ -542,13 +551,11 @@ Experience: {prev_data.get('experience', 'N/A')}
                         st.session_state['last_ai_analysis'] = None
                         
                     else:
-                        # Fallback if no email configured
                         st.success(f"""
                             ✅ **Inquiry Submitted!**
                             
                             Thank you for your interest. We will contact you at {inquiry_email} within 24 hours with the investment prospectus.
                         """)
-                        st.info("️ Note: Email notifications are not configured. Contact admin@jxperience.com for details.")
                         st.session_state['show_inquiry_form'] = False
                         st.session_state['last_ai_analysis'] = None
                     

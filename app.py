@@ -1,10 +1,8 @@
 import streamlit as st
 import pandas as pd
-from openai import OpenAI
 
 st.set_page_config(page_title="JXPerience", page_icon="🔴", layout="wide")
 
-# Custom CSS for scroll to top button
 st.markdown("""
     <style>
     .metric-card {
@@ -17,25 +15,24 @@ st.markdown("""
         color: white; font-weight: bold; font-size: 1.8rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    .scroll-to-top {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: #0066cc;
+    .reset-btn {
+        background: #ff4444;
         color: white;
-        padding: 10px 20px;
-        border-radius: 8px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
         cursor: pointer;
-        z-index: 1000;
+        font-weight: 600;
+        width: 100%;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Scroll to top button
+# Scroll to top
 if st.button("⬆️ Top", key="scroll_top"):
     st.markdown("<script>window.scrollTo(0, 0)</script>", unsafe_allow_html=True)
 
-st.title(" JXPerience")
+st.title("🔴 JXPerience")
 st.markdown("### Japanese Franchise Overseas Expansion Platform")
 
 @st.cache_data
@@ -56,9 +53,11 @@ if df.empty:
 if 'selected_brand' in st.session_state:
     del st.session_state['selected_brand']
 
-# Initialize calculator state
+# Initialize reset states
+if 'filter_reset' not in st.session_state:
+    st.session_state.filter_reset = 0
 if 'calc_reset' not in st.session_state:
-    st.session_state.calc_reset = False
+    st.session_state.calc_reset = 0
 
 def get_brand_initials(brand_name):
     words = str(brand_name).split()
@@ -70,6 +69,32 @@ def get_brand_color(brand_name):
     colors = ['#0066cc', '#0052a3', '#1976d2', '#0288d1', '#0097a7', 
               '#00796b', '#388e3c', '#689f38', '#afb42b', '#fbc02d']
     return colors[sum(ord(c) for c in str(brand_name)) % len(colors)]
+
+# Convert investment string to numeric (handles "200k-400k" format)
+def parse_investment_to_min(inv_str):
+    try:
+        inv_str = str(inv_str).lower().replace(',', '')
+        if 'k' in inv_str:
+            # Extract first number before 'k'
+            import re
+            match = re.search(r'(\d+)', inv_str)
+            if match:
+                return int(match.group(1)) * 1000
+        return int(inv_str)
+    except:
+        return 0
+
+def parse_investment_to_max(inv_str):
+    try:
+        inv_str = str(inv_str).lower().replace(',', '')
+        if 'k' in inv_str:
+            import re
+            matches = re.findall(r'(\d+)', inv_str)
+            if matches:
+                return int(matches[-1]) * 1000
+        return int(inv_str)
+    except:
+        return 0
 
 # Hero metrics
 col1, col2, col3 = st.columns(3)
@@ -83,101 +108,97 @@ with col3:
 st.markdown("---")
 
 # Sidebar with ADVANCED FILTERS
-st.sidebar.header(" Advanced Filters")
+st.sidebar.header("🔍 Advanced Filters")
+
+# RESET BUTTON for filters
+if st.sidebar.button("🔄 Reset All Filters", key=f"reset_filters_{st.session_state.filter_reset}"):
+    st.session_state.filter_reset += 1
+    st.rerun()
 
 # Investment Range Slider
 investment_range = st.sidebar.slider(
     "Investment Range (USD)",
     min_value=100000, max_value=800000,
-    value=(100000, 800000), step=50000
+    value=(100000, 800000), step=50000,
+    key=f"inv_range_{st.session_state.filter_reset}"
 )
 
 # Royalty Filter
 royalty_filter = st.sidebar.slider(
     "Royalty Fee (%)",
     min_value=0.0, max_value=10.0,
-    value=(0.0, 10.0), step=0.5
+    value=(0.0, 10.0), step=0.5,
+    key=f"royalty_{st.session_state.filter_reset}"
 )
 
 # Target Markets
 target_markets = st.sidebar.multiselect(
     "Target Markets",
     options=["USA", "SE Asia", "Europe", "China", "Australia"],
-    default=[]
+    default=[],
+    key=f"markets_{st.session_state.filter_reset}"
 )
 
 # Store Count
 store_filter = st.sidebar.slider(
     "Japan Stores",
     min_value=0, max_value=1000,
-    value=(0, 1000), step=50
+    value=(0, 1000), step=50,
+    key=f"stores_{st.session_state.filter_reset}"
 )
 
 # Sort
-sort_by = st.sidebar.selectbox("Sort By", [
-    "Brand Name (A-Z)", "Investment (Low-High)", 
-    "Investment (High-Low)", "Franchise Fee (Low-High)"
-])
+sort_by = st.sidebar.selectbox(
+    "Sort By",
+    ["Brand Name (A-Z)", "Investment (Low-High)", "Investment (High-Low)", "Franchise Fee (Low-High)"],
+    key=f"sort_{st.session_state.filter_reset}"
+)
 
 # Categories
 selected_category = st.sidebar.multiselect(
     "Category", 
     options=df['category'].unique(), 
-    default=df['category'].unique()
+    default=df['category'].unique(),
+    key=f"category_{st.session_state.filter_reset}"
 )
 
 # Filter data
 filtered_df = df[df['category'].isin(selected_category)].copy()
 
-# Apply investment filter - FIXED: Handle missing columns
-try:
-    filtered_df['min_inv'] = filtered_df['investment_usd'].str.extract('(\d+)')[0].fillna('0').astype(int)
-    filtered_df = filtered_df[
-        (filtered_df['min_inv'] >= investment_range[0]) & 
-        (filtered_df['min_inv'] <= investment_range[1])
-    ]
-except:
-    pass  # Skip if column doesn't exist
+# Apply investment filter - FIXED to handle "200k-400k" format
+filtered_df['min_inv'] = filtered_df['investment_usd'].apply(parse_investment_to_min)
+filtered_df['max_inv'] = filtered_df['investment_usd'].apply(parse_investment_to_max)
+filtered_df = filtered_df[
+    (filtered_df['max_inv'] >= investment_range[0]) & 
+    (filtered_df['min_inv'] <= investment_range[1])
+]
 
 # Apply royalty filter
-try:
-    filtered_df = filtered_df[
-        (filtered_df['royalty_pct'] >= royalty_filter[0]) & 
-        (filtered_df['royalty_pct'] <= royalty_filter[1])
-    ]
-except:
-    pass
+filtered_df = filtered_df[
+    (filtered_df['royalty_pct'] >= royalty_filter[0]) & 
+    (filtered_df['royalty_pct'] <= royalty_filter[1])
+]
 
 # Apply target market filter
 if target_markets:
-    try:
-        filtered_df = filtered_df[filtered_df['target_markets'].apply(
-            lambda x: any(m in str(x) for m in target_markets)
-        )]
-    except:
-        pass
+    filtered_df = filtered_df[filtered_df['target_markets'].apply(
+        lambda x: any(m in str(x) for m in target_markets)
+    )]
 
-# Apply store filter - FIXED: Handle missing columns
-try:
-    filtered_df['stores_num'] = filtered_df['stores_japan'].str.extract('(\d+)')[0].fillna('0').astype(int)
-    filtered_df = filtered_df[
-        (filtered_df['stores_num'] >= store_filter[0]) & 
-        (filtered_df['stores_num'] <= store_filter[1])
-    ]
-except:
-    pass
+# Apply store filter
+filtered_df['stores_num'] = filtered_df['stores_japan'].str.extract('(\d+)')[0].fillna('0').astype(int)
+filtered_df = filtered_df[
+    (filtered_df['stores_num'] >= store_filter[0]) & 
+    (filtered_df['stores_num'] <= store_filter[1])
+]
 
 # Sort
 if "Investment (Low-High)" in sort_by:
-    try:
-        filtered_df = filtered_df.sort_values('min_inv')
-    except:
-        pass
+    filtered_df = filtered_df.sort_values('min_inv')
 elif "Investment (High-Low)" in sort_by:
-    try:
-        filtered_df = filtered_df.sort_values('min_inv', ascending=False)
-    except:
-        pass
+    filtered_df = filtered_df.sort_values('min_inv', ascending=False)
+elif "Franchise Fee (Low-High)" in sort_by:
+    filtered_df = filtered_df.sort_values('franchise_fee_usd')
 else:
     filtered_df = filtered_df.sort_values('brand_name')
 
@@ -216,24 +237,19 @@ for idx, row in filtered_df.iterrows():
 st.markdown("---")
 st.markdown("### 💰 Investment Calculator")
 
-calc_col1, calc_col2 = st.columns([2, 1])
-with calc_col1:
-    calculator_expanded = st.expander("Open Calculator", expanded=False)
-
-with calculator_expanded:
+with st.expander("📊 Open Calculator", expanded=False):
     # Reset button
-    if st.button("🔄 Reset Calculator"):
-        st.session_state.calc_reset = not st.session_state.calc_reset
+    if st.button("🔄 Reset Calculator", key=f"calc_reset_btn_{st.session_state.calc_reset}"):
+        st.session_state.calc_reset += 1
+        st.rerun()
     
     col1, col2 = st.columns(2)
     
     with col1:
-        # Use unique keys for reset functionality
-        reset_key = st.session_state.calc_reset
-        investment = st.number_input("Total Investment ($)", value=300000, step=10000, key=f"inv_{reset_key}")
-        revenue = st.number_input("Monthly Revenue ($)", value=50000, step=5000, key=f"rev_{reset_key}")
-        margin = st.slider("Profit Margin (%)", 5, 30, 15, key=f"margin_{reset_key}")
-        royalty = st.number_input("Royalty (%)", 0.0, 10.0, 5.0, key=f"roy_{reset_key}")
+        investment = st.number_input("Total Investment ($)", value=300000, step=10000, key=f"inv_{st.session_state.calc_reset}")
+        revenue = st.number_input("Monthly Revenue ($)", value=50000, step=5000, key=f"rev_{st.session_state.calc_reset}")
+        margin = st.slider("Profit Margin (%)", 5, 30, 15, key=f"margin_{st.session_state.calc_reset}")
+        royalty = st.number_input("Royalty (%)", 0.0, 10.0, 5.0, key=f"roy_{st.session_state.calc_reset}")
     
     with col2:
         monthly_profit = revenue * (margin / 100)
@@ -250,7 +266,7 @@ with calculator_expanded:
         if roi > 20:
             st.success("✅ Excellent ROI!")
         elif roi > 15:
-            st.info("️ Good ROI")
+            st.info("ℹ️ Good ROI")
         else:
             st.warning("⚠️ Low ROI")
 

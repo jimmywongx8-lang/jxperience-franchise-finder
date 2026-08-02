@@ -14,52 +14,8 @@ st.set_page_config(
     layout="wide"
 )
 
-st.markdown("""
-    <style>
-    .main-header { font-size: 2.5rem; font-weight: 700; color: #1f1f1f; }
-    .brand-accent { color: #0066cc; }
-    .stat-card {
-        background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
-        color: white; padding: 20px; border-radius: 12px; text-align: center; margin: 10px;
-    }
-    .stat-number { font-size: 2rem; font-weight: 700; display: block; }
-    .stat-label { font-size: 0.85rem; opacity: 0.9; }
-    .disclaimer-box {
-        background-color: #fff3cd; border-left: 4px solid #ffc107;
-        padding: 12px 16px; margin: 20px 0;
-    }
-    .email-capture-box {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-radius: 16px; padding: 30px; margin: 20px 0;
-        border: 2px solid #dee2e6;
-    }
-    .inquiry-box {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        border-radius: 16px; padding: 30px; margin: 20px 0;
-        border: 2px solid #0066cc;
-    }
-    .brand-initial {
-        width: 60px; height: 60px; border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: 1.5rem; color: white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .logo-container {
-        width: 60px; height: 60px;
-        background: white; border-radius: 10px;
-        border: 2px solid #e0e0e0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        display: flex; align-items: center; justify-content: center;
-        padding: 5px;
-    }
-    .logo-container img {
-        max-width: 100%; max-height: 100%;
-        object-fit: contain;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-st.markdown('<div class="main-header"><span class="brand-accent">JX</span>Perience</div>', unsafe_allow_html=True)
+# Header
+st.title("🔴 JXPerience")
 st.markdown("### Japanese Franchise Overseas Expansion Platform")
 st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
 
@@ -81,28 +37,7 @@ if df.empty:
 if 'selected_brand' in st.session_state:
     del st.session_state['selected_brand']
 
-# ========== AUTOMATIC LOGO FUNCTION ==========
-def get_logo_html(brand_name, website=None):
-    initials = get_brand_initials(brand_name)
-    brand_color = get_brand_color(brand_name)
-    
-    # Get logo URL from Clearbit
-    logo_url = None
-    if website and pd.notna(website):
-        domain = str(website).replace('https://', '').replace('http://', '').split('/')[0].replace('www.', '')
-        if domain:
-            logo_url = f"https://logo.clearbit.com/{domain}"
-    
-    if logo_url:
-        return f'''
-        <div class="logo-container">
-            <img src="{logo_url}" alt="{brand_name}" 
-                 onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'brand-initial\' style=\'background-color: {brand_color};\'>{initials}</div>';">
-        </div>
-        '''
-    else:
-        return f'<div class="brand-initial" style="background-color: {brand_color};">{initials}</div>'
-
+# Helper functions
 def get_brand_initials(brand_name):
     if not brand_name:
         return "??"
@@ -113,15 +48,13 @@ def get_brand_initials(brand_name):
 
 def get_brand_color(brand_name):
     colors = ['#0066cc', '#0052a3', '#1976d2', '#0288d1', '#0097a7', 
-              '#00796b', '#388e3c', '#689f38', '#afb42b', '#fbc02d',
-              '#ff9800', '#ff5722', '#795548', '#607d8b', '#9c27b0']
+              '#00796b', '#388e3c', '#689f38', '#afb42b', '#fbc02d']
     hash_val = sum(ord(c) for c in str(brand_name)) % len(colors)
     return colors[hash_val]
-# ========== END LOGO FUNCTIONS ==========
 
 def get_confidence_badge(confidence):
     if confidence == "YES": return "✅ Confirmed"
-    elif confidence == "PROBABLE": return " Probable"
+    elif confidence == "PROBABLE": return "🟡 Probable"
     elif confidence == "NEEDS_VERIFICATION": return "⚠️ Verify"
     return "❌ No"
 
@@ -136,11 +69,11 @@ client = OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
 # Hero Section
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.markdown('<div class="stat-card"><span class="stat-number">63+</span><span class="stat-label">Japanese Franchises<br/>Analyzed</span></div>', unsafe_allow_html=True)
+    st.metric("Japanese Franchises Analyzed", "63+")
 with col2:
-    st.markdown('<div class="stat-card"><span class="stat-number">$100k-$800k</span><span class="stat-label">Investment Range<br/>(USD)</span></div>', unsafe_allow_html=True)
+    st.metric("Investment Range (USD)", "$100k-$800k")
 with col3:
-    st.markdown('<div class="stat-card"><span class="stat-number">15+</span><span class="stat-label">Target Markets</span></div>', unsafe_allow_html=True)
+    st.metric("Target Markets", "15+")
 
 st.markdown("---")
 
@@ -148,11 +81,11 @@ st.markdown("---")
 st.sidebar.header("🔍 Search")
 search_term = st.sidebar.text_input("", placeholder="Type brand name...")
 
-st.sidebar.header(" Discovery Mode")
+st.sidebar.header("💎 Discovery Mode")
 display_mode = st.sidebar.radio("Show:", ["💎 Hidden Gems (<50 overseas)", "📋 All Brands (A-Z)", "✅ Verified Only"])
 
 st.sidebar.header("📊 Sort By")
-sort_by = st.sidebar.selectbox("Primary sort:", ["Brand Name (A-Z)", "Investment (Low-High)", "Investment (High-Low)", "Franchise Fee (Low-High)"])
+sort_by = st.sidebar.selectbox("Primary sort:", ["Brand Name (A-Z)", "Investment (Low-High)", "Investment (High-Low)"])
 
 st.sidebar.header("Filter by Category")
 selected_category = st.sidebar.multiselect("Select categories:", options=df['category'].unique(), default=df['category'].unique())
@@ -180,44 +113,51 @@ if search_term:
 
 st.subheader(f"💎 Found {len(filtered_df)} Brands")
 
-st.markdown("""
-    <div class="disclaimer-box">
-        <strong>️ Disclaimer:</strong> All information sourced from public data. JXPerience is not officially affiliated with listed brands.
-    </div>
-""", unsafe_allow_html=True)
+st.info("ℹ️ **Disclaimer:** All information sourced from public data. JXPerience is not officially affiliated with listed brands.")
 
 st.markdown("### 📊 Franchise Directory")
 
-# Display with automatic logos
+# Display brands with colored initials
 for idx, row in filtered_df.iterrows():
     brand_name = row['brand_name']
-    website = row.get('website', '')
-    logo_html = get_logo_html(brand_name, website)
+    initials = get_brand_initials(brand_name)
+    brand_color = get_brand_color(brand_name)
     
-    col1, col2, col3, col4, col5 = st.columns([1, 3, 2, 2, 1])
-    
-    with col1:
-        st.markdown(logo_html, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown(f"**{brand_name}**")
-        st.caption(row['category'])
-    
-    with col3:
-        st.write(f"🇯🇵 {row['stores_japan']} stores")
-        st.write(f"🌏 {row['stores_overseas']} overseas")
-    
-    with col4:
-        st.write(f"💰 {row['investment_usd']}")
-        fee_val = f"${int(row['franchise_fee_usd']):,}" if pd.notna(row['franchise_fee_usd']) else 'N/A'
-        st.write(f"Fee: {fee_val}")
-    
-    with col5:
-        if st.button("🔍 View Details", key=f"view_{idx}"):
-            st.session_state['selected_brand'] = brand_name
-            st.switch_page("pages/3_Brand_Profile.py")
+    # Create container for each brand
+    with st.container():
+        col_logo, col_name, col_stores, col_investment, col_button = st.columns([1, 3, 2, 2, 1])
+        
+        with col_logo:
+            # Display colored circle with initials
+            st.markdown(f"""
+                <div style="width:60px;height:60px;border-radius:10px;background-color:{brand_color};
+                            display:flex;align-items:center;justify-content:center;
+                            color:white;font-weight:bold;font-size:1.5rem;
+                            box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                    {initials}
+                </div>
+            """, unsafe_allow_html=True)
+        
+        with col_name:
+            st.markdown(f"**{brand_name}**")
+            st.caption(row['category'])
+        
+        with col_stores:
+            st.write(f"🇯🇵 {row['stores_japan']} stores")
+            st.write(f"🌏 {row['stores_overseas']} overseas")
+        
+        with col_investment:
+            st.write(f"💰 {row['investment_usd']}")
+            fee_val = f"${int(row['franchise_fee_usd']):,}" if pd.notna(row['franchise_fee_usd']) else 'N/A'
+            st.write(f"Fee: {fee_val}")
+        
+        with col_button:
+            if st.button("🔍 View Details", key=f"view_{idx}"):
+                st.session_state['selected_brand'] = brand_name
+                st.switch_page("pages/3_Brand_Profile.py")
+        
+        st.markdown("---")
 
-# [Keep rest of your existing code - email capture, AI form, inquiry form]
-
+# Keep rest of your code (email capture, AI form, etc.)
 st.markdown("---")
-st.markdown("<div style='text-align: center; color: #888; font-size: 0.85rem;'>© 2026 <span style='color:#0066cc'>JX</span>Perience | Japanese Franchise Overseas Expansion Platform</div>", unsafe_allow_html=True)
+st.caption("© 2026 JXPerience | Japanese Franchise Overseas Expansion Platform")

@@ -2,19 +2,28 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# --- 1. Data Loading (Replace this with your actual data source) ---
+# --- 1. Page Configuration ---
+st.set_page_config(page_title="JXPerience", page_icon="🍣", layout="wide")
+
+# --- 2. Data Loading ---
 @st.cache_data
 def load_data():
-    # I added dummy data here so the app runs. 
-    # Replace this with your actual CSV/Database loading logic.
+    # Comprehensive dummy data reflecting Japanese franchise expansion
+    # Replace this with your actual CSV/Database loading logic (e.g., pd.read_csv("data.csv"))
     data = {
-        'brand_name': ['Sushi Master', 'Ramen King', 'Matcha Cafe'],
-        'investment_usd': [150000, 80000, 50000],
-        'franchise_fee_usd': [30000, 15000, 10000],
-        'royalty_pct': [5, 6, 4],
-        'stores_japan': [120, 85, 40],
-        'stores_overseas': [300, 150, 20],
-        'target_markets': ['USA, UK, Australia', 'Asia, Europe', 'North America']
+        'brand_name': ['Sushi Master', 'Ramen King', 'Matcha Cafe', 'Tonkatsu Pro', 'Yakitori Lane'],
+        'cuisine': ['Sushi', 'Ramen', 'Cafe', 'Tonkatsu', 'Yakitori'],
+        'investment_usd': [150000, 80000, 50000, 120000, 90000],
+        'franchise_fee_usd': [30000, 15000, 10000, 25000, 20000],
+        'royalty_pct': [5, 6, 4, 5, 5],
+        'stores_japan': [120, 85, 40, 60, 45],
+        'stores_overseas': [300, 150, 20, 80, 10],
+        'target_markets': ['USA, UK, Australia', 'Asia, Europe', 'North America', 'Southeast Asia', 'USA, Canada'],
+        'avg_monthly_revenue_usd': [45000, 35000, 25000, 40000, 30000],
+        'avg_monthly_cost_usd': [30000, 25000, 18000, 28000, 22000],
+        'video_link': ['https://example.com/sushi', 'https://example.com/ramen', 'https://example.com/matcha', 'https://example.com/tonkatsu', 'https://example.com/yakitori'],
+        'pros': ['High brand recognition', 'Standardized operations', 'Strong supply chain', 'Premium positioning', 'Authentic experience'],
+        'cons': ['High initial investment', 'Strict quality control', 'Limited menu flexibility', 'Complex kitchen setup', 'Niche market appeal']
     }
     return pd.DataFrame(data)
 
@@ -24,7 +33,7 @@ df = load_data()
 if 'brands_to_compare' not in st.session_state:
     st.session_state.brands_to_compare = []
 
-# --- 2. Your HTML Generator Function ---
+# --- 3. Helper Functions ---
 def create_comparison_html(compare_df):
     """Create HTML table for download"""
     html = f"""
@@ -43,7 +52,7 @@ def create_comparison_html(compare_df):
         html += f'<th style="border: 1px solid #ddd; padding: 12px;">{brand}</th>'
     
     metrics = [
-        ('Investment', lambda r: f"${r['investment_usd']}"),
+        ('Investment', lambda r: f"${r['investment_usd']:,}"),
         ('Franchise Fee', lambda r: f"${int(r['franchise_fee_usd']):,}"),
         ('Royalty', lambda r: f"{r['royalty_pct']}%"),
         ('Japan Stores', lambda r: str(r['stores_japan'])),
@@ -67,40 +76,109 @@ def create_comparison_html(compare_df):
     """
     return html
 
-# --- 3. The App UI ---
-st.title("JXPerience - Franchise Finder")
+# --- 4. Main UI ---
+st.title("🍣 JXPerience: Japanese Franchise Overseas Expansion")
+st.markdown("A non-profit initiative to support the global growth of authentic Japanese cuisine.")
 
-# Sidebar to let users select brands
-st.sidebar.header("Select Brands to Compare")
-selected_brands = st.sidebar.multiselect(
-    "Choose brands:",
-    options=df['brand_name'].tolist(),
-    default=st.session_state.brands_to_compare
-)
-st.session_state.brands_to_compare = selected_brands
+# Sidebar Filters
+st.sidebar.header("🔍 Filter Brands")
+cuisine_filter = st.sidebar.multiselect("Cuisine Type", options=df['cuisine'].unique(), default=df['cuisine'].unique())
+min_investment = st.sidebar.slider("Max Investment (USD)", 0, 200000, 200000)
+min_overseas = st.sidebar.slider("Min Overseas Stores", 0, 500, 0)
 
-num_selected = len(st.session_state.brands_to_compare)
+# Apply Filters
+filtered_df = df[
+    (df['cuisine'].isin(cuisine_filter)) &
+    (df['investment_usd'] <= min_investment) &
+    (df['stores_overseas'] >= min_overseas)
+].copy()
 
-st.write("### Comparison Toolbar")
+# --- 5. Tabs for Different Views ---
+tab1, tab2, tab3 = st.tabs(["📊 Brand Directory", "🧮 ROI Calculator", "⚖️ Brand Comparison"])
 
-# ==========================================
-# THE FIX: Define the columns BEFORE using them!
-# ==========================================
-col1, col2 = st.columns(2)
+# TAB 1: Brand Directory & Profiles
+with tab1:
+    st.subheader("Available Franchise Opportunities")
+    st.dataframe(filtered_df[['brand_name', 'cuisine', 'investment_usd', 'stores_japan', 'stores_overseas']], use_container_width=True)
+    
+    st.markdown("---")
+    st.subheader("Brand Profile Details")
+    selected_brand = st.selectbox("Select a brand to view detailed profile:", filtered_df['brand_name'].tolist())
+    
+    if selected_brand:
+        brand_data = filtered_df[filtered_df['brand_name'] == selected_brand].iloc[0]
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write(f"**Cuisine:** {brand_data['cuisine']}")
+            st.write(f"**Total Investment:** ${brand_data['investment_usd']:,}")
+            st.write(f"**Franchise Fee:** ${brand_data['franchise_fee_usd']:,}")
+            st.write(f"**Royalty:** {brand_data['royalty_pct']}%")
+            st.write(f"**Stores (Japan):** {brand_data['stores_japan']}")
+            st.write(f"**Stores (Overseas):** {brand_data['stores_overseas']}")
+        with col2:
+            st.write("**✅ Pros:**")
+            st.write(f"- {brand_data['pros']}")
+            st.write("**⚠️ Cons:**")
+            st.write(f"- {brand_data['cons']}")
+            st.markdown(f"**🎥 Intro Video:** [Watch Brand Introduction]({brand_data['video_link']})")
 
-with col1:
-    st.info(f"Selected {num_selected} brand(s) for comparison.")
+# TAB 2: ROI Calculator
+with tab2:
+    st.subheader("🧮 Franchise ROI Estimator")
+    st.markdown("Estimate your potential return on investment based on average brand performance.")
+    
+    calc_col1, calc_col2 = st.columns(2)
+    with calc_col1:
+        initial_investment = st.number_input("Initial Investment (USD)", value=100000, step=10000)
+        monthly_revenue = st.number_input("Estimated Monthly Revenue (USD)", value=40000, step=5000)
+    with calc_col2:
+        monthly_costs = st.number_input("Estimated Monthly Costs (USD) *(incl. royalty, rent, labor)*", value=28000, step=2000)
+        projection_years = st.slider("Projection Period (Years)", 1, 10, 5)
+    
+    if st.button("Calculate ROI"):
+        monthly_profit = monthly_revenue - monthly_costs
+        annual_profit = monthly_profit * 12
+        total_profit = annual_profit * projection_years
+        roi = ((total_profit - initial_investment) / initial_investment) * 100
+        
+        st.success(f"**Estimated Monthly Profit:** ${monthly_profit:,.2f}")
+        st.info(f"**Total Profit over {projection_years} years:** ${total_profit:,.2f}")
+        st.metric("Projected ROI", f"{roi:.1f}%", delta=f"${total_profit - initial_investment:,.2f} net gain")
 
-with col2:
-    if num_selected >= 2:
-        compare_df = df[df['brand_name'].isin(st.session_state.brands_to_compare)]
-        html_content = create_comparison_html(compare_df)
-        st.download_button(
-            label="📄 Download Comparison",
-            data=html_content,
-            file_name=f"brand_comparison_{datetime.now().strftime('%Y%m%d')}.html",
-            mime="text/html",
-            use_container_width=True
-        )
-    else:
-        st.warning("Please select at least 2 brands to enable the download.")
+# TAB 3: Brand Comparison (The fixed part!)
+with tab3:
+    st.subheader("⚖️ Side-by-Side Brand Comparison")
+    
+    # Comparison selection
+    compare_options = st.multiselect(
+        "Select 2 or more brands to compare:",
+        options=df['brand_name'].tolist(),
+        default=st.session_state.brands_to_compare
+    )
+    st.session_state.brands_to_compare = compare_options
+    num_selected = len(st.session_state.brands_to_compare)
+    
+    # ==========================================
+    # THE FIX: Define columns BEFORE using them!
+    # ==========================================
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if num_selected >= 2:
+            st.success(f"✅ {num_selected} brands selected for comparison.")
+            compare_df = df[df['brand_name'].isin(st.session_state.brands_to_compare)]
+            st.dataframe(compare_df[['brand_name', 'investment_usd', 'franchise_fee_usd', 'royalty_pct', 'stores_overseas']], use_container_width=True)
+        else:
+            st.warning("⚠️ Please select at least 2 brands to enable comparison and download.")
+    
+    with col2:
+        if num_selected >= 2:
+            compare_df = df[df['brand_name'].isin(st.session_state.brands_to_compare)]
+            html_content = create_comparison_html(compare_df)
+            st.download_button(
+                label="📄 Download Comparison as HTML",
+                data=html_content,
+                file_name=f"brand_comparison_{datetime.now().strftime('%Y%m%d')}.html",
+                mime="text/html",
+                use_container_width=True
+            )

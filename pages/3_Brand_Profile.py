@@ -3,6 +3,10 @@ import pandas as pd
 
 st.set_page_config(page_title="Brand Profile | JXPerience", page_icon="🔴", layout="wide")
 
+# Scroll to top button
+if st.button("️ Top", key="scroll_top_profile"):
+    st.markdown("<script>window.scrollTo(0, 0)</script>", unsafe_allow_html=True)
+
 def get_brand_initials(brand_name):
     words = str(brand_name).split()
     if len(words) >= 2:
@@ -85,11 +89,11 @@ with col3:
 
 # About
 if pd.notna(brand_data.get('notes', '')):
-    st.subheader(" About This Brand")
+    st.subheader("📖 About This Brand")
     st.info(brand_data['notes'])
 
 # Expansion
-st.subheader(" Expansion Information")
+st.subheader("🌍 Expansion Information")
 col1, col2 = st.columns(2)
 with col1:
     st.markdown("**Target Markets**")
@@ -101,7 +105,7 @@ with col2:
     website = brand_data['website'] if pd.notna(brand_data['website']) else ''
     st.markdown("**Website**")
     if website:
-        st.markdown(f"[🔗 {website}](https://{website})")
+        st.markdown(f"[ {website}](https://{website})")
     st.markdown("**Verification Status**")
     st.write(brand_data.get('franchise_status', 'N/A'))
 
@@ -113,7 +117,7 @@ with col1:
         st.session_state['selected_brand'] = brand_data['brand_name']
         st.switch_page("app.py")
 with col2:
-    if st.button(" Contact Franchisor", use_container_width=True):
+    if st.button("📤 Contact Franchisor", use_container_width=True):
         st.session_state['selected_brand'] = brand_data['brand_name']
         st.switch_page("app.py")
 

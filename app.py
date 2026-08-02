@@ -23,6 +23,12 @@ st.markdown("""
         display: inline-block;
         margin: 2px;
     }
+    .compare-checkbox {
+        background: #e3f2fd;
+        padding: 10px;
+        border-radius: 8px;
+        margin: 10px 0;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -55,6 +61,10 @@ if 'filter_reset' not in st.session_state:
     st.session_state.filter_reset = 0
 if 'calc_reset' not in st.session_state:
     st.session_state.calc_reset = 0
+
+# ========== COMPARISON FEATURE ==========
+if 'brands_to_compare' not in st.session_state:
+    st.session_state.brands_to_compare = []
 
 def get_brand_initials(brand_name):
     words = str(brand_name).split()
@@ -187,13 +197,96 @@ else:
 
 st.subheader(f"💎 Found {len(filtered_df)} Brands")
 
-# ENHANCED BRAND CARDS
+# ========== COMPARISON TOOLBAR ==========
+if len(st.session_state.brands_to_compare) > 0:
+    st.markdown(f"""
+    <div style="background:#e3f2fd;padding:15px;border-radius:10px;margin:20px 0;">
+        <strong>📊 Comparing {len(st.session_state.brands_to_compare)} brands:</strong> 
+        {', '.join(st.session_state.brands_to_compare)}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("📊 View Comparison", use_container_width=True):
+            st.session_state.show_comparison = True
+            st.rerun()
+    with col2:
+        if st.button("️ Clear All", use_container_width=True):
+            st.session_state.brands_to_compare = []
+            st.rerun()
+    with col3:
+        if st.button("⬅️ Back to Browse", use_container_width=True):
+            st.session_state.show_comparison = False
+            st.rerun()
+
+# Show comparison view
+if st.session_state.get('show_comparison', False) and len(st.session_state.brands_to_compare) >= 2:
+    st.markdown("---")
+    st.subheader("📊 Brand Comparison")
+    
+    # Get comparison data
+    compare_df = df[df['brand_name'].isin(st.session_state.brands_to_compare)]
+    
+    # Create comparison table
+    st.markdown("### Side-by-Side Comparison")
+    
+    comparison_data = {
+        'Metric': ['Investment Range', 'Franchise Fee', 'Royalty %', 'Stores in Japan', 
+                   'Overseas Stores', 'Target Markets', 'HQ Location', 'Expansion Type'],
+    }
+    
+    for idx, row in compare_df.iterrows():
+        comparison_data[row['brand_name']] = [
+            f"${row['investment_usd']}",
+            f"${int(row['franchise_fee_usd']):,}",
+            f"{row['royalty_pct']}%",
+            row['stores_japan'],
+            row['stores_overseas'],
+            row['target_markets'],
+            row.get('hq_location', 'N/A') if 'hq_location' in row else 'N/A',
+            row.get('expansion_type', 'N/A') if 'expansion_type' in row else 'N/A'
+        ]
+    
+    comparison_df = pd.DataFrame(comparison_data)
+    st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+    
+    # Visual comparison cards
+    st.markdown("### Visual Comparison")
+    cols = st.columns(len(st.session_state.brands_to_compare))
+    
+    for idx, (col, brand_name) in enumerate(zip(cols, st.session_state.brands_to_compare)):
+        brand_data = compare_df[compare_df['brand_name'] == brand_name].iloc[0]
+        initials = get_brand_initials(brand_name)
+        brand_color = get_brand_color(brand_name)
+        
+        with col:
+            st.markdown(f"""
+            <div style="background:white;padding:20px;border-radius:12px;border:2px solid {brand_color};margin:10px 0;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:15px;">
+                    <div style="width:50px;height:50px;border-radius:8px;background:{brand_color};
+                                display:flex;align-items:center;justify-content:center;
+                                color:white;font-weight:bold;font-size:1.5rem;">
+                        {initials}
+                    </div>
+                    <h3 style="margin:0;color:{brand_color};">{brand_name}</h3>
+                </div>
+                <p><strong>Investment:</strong> ${brand_data['investment_usd']}</p>
+                <p><strong>Fee:</strong> ${int(brand_data['franchise_fee_usd']):,}</p>
+                <p><strong>Royalty:</strong> {brand_data['royalty_pct']}%</p>
+                <p><strong>Markets:</strong> {brand_data['target_markets']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    st.stop()  # Stop here if showing comparison
+
+# BRAND CARDS with comparison checkboxes
 for idx, row in filtered_df.iterrows():
     brand_name = row['brand_name']
     initials = get_brand_initials(brand_name)
     brand_color = get_brand_color(brand_name)
     
-    # Get enriched data (with fallbacks)
+    # Get enriched data
     japan_regions = row.get('japan_regions', '') if 'japan_regions' in row else ''
     overseas_countries = row.get('overseas_countries', '') if 'overseas_countries' in row else ''
     hq_location = row.get('hq_location', '') if 'hq_location' in row else ''
@@ -209,35 +302,44 @@ for idx, row in filtered_df.iterrows():
             """, unsafe_allow_html=True)
         
         with col_content:
+            # Comparison checkbox
+            is_selected = brand_name in st.session_state.brands_to_compare
+            if st.checkbox(f"Compare", value=is_selected, key=f"compare_{brand_name}", 
+                          help="Select to compare with other brands"):
+                if brand_name not in st.session_state.brands_to_compare:
+                    if len(st.session_state.brands_to_compare) < 3:
+                        st.session_state.brands_to_compare.append(brand_name)
+                    else:
+                        st.warning("You can compare up to 3 brands at a time")
+                        st.session_state.brands_to_compare = [b for b in st.session_state.brands_to_compare if b != brand_name]
+            else:
+                if brand_name in st.session_state.brands_to_compare:
+                    st.session_state.brands_to_compare.remove(brand_name)
+            
             st.markdown(f"**{brand_name}**")
             st.caption(row['category'])
             
-            # Japan stores with regions
             japan_info = f"🇯🇵 {row['stores_japan']} stores"
             if japan_regions and pd.notna(japan_regions):
                 japan_info += f" ({japan_regions})"
             
-            # Overseas stores with countries
             overseas_info = f"🌏 {row['stores_overseas']} overseas"
             if overseas_countries and pd.notna(overseas_countries):
                 overseas_info += f" ({overseas_countries})"
             
             st.write(f"{japan_info} | {overseas_info}")
             
-            # HQ Location
             if hq_location and pd.notna(hq_location):
                 st.write(f"📍 HQ: {hq_location}")
             
-            # Investment info
             st.write(f"💰 {row['investment_usd']} | Fee: ${int(row['franchise_fee_usd']):,} | {row['royalty_pct']}% royalty")
             
-            # Target markets as tags
             if row['target_markets'] and pd.notna(row['target_markets']):
                 markets = str(row['target_markets']).split(',')
                 st.markdown(" ".join([f'<span class="info-tag">🌍 {m.strip()}</span>' for m in markets]), unsafe_allow_html=True)
         
         with col_btn:
-            if st.button(" View Details", key=f"view_{idx}"):
+            if st.button("🔍 View Details", key=f"view_{idx}"):
                 st.session_state['selected_brand'] = brand_name
                 st.switch_page("pages/3_Brand_Profile.py")
         
@@ -247,7 +349,7 @@ for idx, row in filtered_df.iterrows():
 st.markdown("---")
 st.markdown("### 💰 Investment Calculator")
 
-with st.expander("📊 Open Calculator", expanded=False):
+with st.expander(" Open Calculator", expanded=False):
     if st.button("🔄 Reset Calculator", key=f"calc_reset_btn_{st.session_state.calc_reset}"):
         st.session_state.calc_reset += 1
         st.rerun()
@@ -277,6 +379,6 @@ with st.expander("📊 Open Calculator", expanded=False):
         elif roi > 15:
             st.info("ℹ️ Good ROI")
         else:
-            st.warning("⚠️ Low ROI")
+            st.warning("️ Low ROI")
 
 st.caption("© 2026 JXPerience")

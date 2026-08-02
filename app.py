@@ -1,7 +1,30 @@
-# Remove this line from imports:
-# from fpdf import FPDF
+import streamlit as st
+import pandas as pd
+from datetime import datetime
 
-# Replace the generate_comparison_pdf function with:
+# --- 1. Data Loading (Replace this with your actual data source) ---
+@st.cache_data
+def load_data():
+    # I added dummy data here so the app runs. 
+    # Replace this with your actual CSV/Database loading logic.
+    data = {
+        'brand_name': ['Sushi Master', 'Ramen King', 'Matcha Cafe'],
+        'investment_usd': [150000, 80000, 50000],
+        'franchise_fee_usd': [30000, 15000, 10000],
+        'royalty_pct': [5, 6, 4],
+        'stores_japan': [120, 85, 40],
+        'stores_overseas': [300, 150, 20],
+        'target_markets': ['USA, UK, Australia', 'Asia, Europe', 'North America']
+    }
+    return pd.DataFrame(data)
+
+df = load_data()
+
+# Initialize session state for comparisons
+if 'brands_to_compare' not in st.session_state:
+    st.session_state.brands_to_compare = []
+
+# --- 2. Your HTML Generator Function ---
 def create_comparison_html(compare_df):
     """Create HTML table for download"""
     html = f"""
@@ -44,7 +67,30 @@ def create_comparison_html(compare_df):
     """
     return html
 
-# Then in the comparison toolbar section, replace the PDF download button with:
+# --- 3. The App UI ---
+st.title("JXPerience - Franchise Finder")
+
+# Sidebar to let users select brands
+st.sidebar.header("Select Brands to Compare")
+selected_brands = st.sidebar.multiselect(
+    "Choose brands:",
+    options=df['brand_name'].tolist(),
+    default=st.session_state.brands_to_compare
+)
+st.session_state.brands_to_compare = selected_brands
+
+num_selected = len(st.session_state.brands_to_compare)
+
+st.write("### Comparison Toolbar")
+
+# ==========================================
+# THE FIX: Define the columns BEFORE using them!
+# ==========================================
+col1, col2 = st.columns(2)
+
+with col1:
+    st.info(f"Selected {num_selected} brand(s) for comparison.")
+
 with col2:
     if num_selected >= 2:
         compare_df = df[df['brand_name'].isin(st.session_state.brands_to_compare)]
@@ -56,3 +102,5 @@ with col2:
             mime="text/html",
             use_container_width=True
         )
+    else:
+        st.warning("Please select at least 2 brands to enable the download.")

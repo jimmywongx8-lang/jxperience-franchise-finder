@@ -15,15 +15,13 @@ st.markdown("""
         color: white; font-weight: bold; font-size: 1.8rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    .reset-btn {
-        background: #ff4444;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 6px;
-        border: none;
-        cursor: pointer;
-        font-weight: 600;
-        width: 100%;
+    .info-tag {
+        background: #f0f0f0;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: inline-block;
+        margin: 2px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -53,7 +51,6 @@ if df.empty:
 if 'selected_brand' in st.session_state:
     del st.session_state['selected_brand']
 
-# Initialize reset states
 if 'filter_reset' not in st.session_state:
     st.session_state.filter_reset = 0
 if 'calc_reset' not in st.session_state:
@@ -70,12 +67,10 @@ def get_brand_color(brand_name):
               '#00796b', '#388e3c', '#689f38', '#afb42b', '#fbc02d']
     return colors[sum(ord(c) for c in str(brand_name)) % len(colors)]
 
-# Convert investment string to numeric (handles "200k-400k" format)
 def parse_investment_to_min(inv_str):
     try:
         inv_str = str(inv_str).lower().replace(',', '')
         if 'k' in inv_str:
-            # Extract first number before 'k'
             import re
             match = re.search(r'(\d+)', inv_str)
             if match:
@@ -107,15 +102,13 @@ with col3:
 
 st.markdown("---")
 
-# Sidebar with ADVANCED FILTERS
+# Sidebar
 st.sidebar.header("🔍 Advanced Filters")
 
-# RESET BUTTON for filters
 if st.sidebar.button("🔄 Reset All Filters", key=f"reset_filters_{st.session_state.filter_reset}"):
     st.session_state.filter_reset += 1
     st.rerun()
 
-# Investment Range Slider
 investment_range = st.sidebar.slider(
     "Investment Range (USD)",
     min_value=100000, max_value=800000,
@@ -123,7 +116,6 @@ investment_range = st.sidebar.slider(
     key=f"inv_range_{st.session_state.filter_reset}"
 )
 
-# Royalty Filter
 royalty_filter = st.sidebar.slider(
     "Royalty Fee (%)",
     min_value=0.0, max_value=10.0,
@@ -131,7 +123,6 @@ royalty_filter = st.sidebar.slider(
     key=f"royalty_{st.session_state.filter_reset}"
 )
 
-# Target Markets
 target_markets = st.sidebar.multiselect(
     "Target Markets",
     options=["USA", "SE Asia", "Europe", "China", "Australia"],
@@ -139,7 +130,6 @@ target_markets = st.sidebar.multiselect(
     key=f"markets_{st.session_state.filter_reset}"
 )
 
-# Store Count
 store_filter = st.sidebar.slider(
     "Japan Stores",
     min_value=0, max_value=1000,
@@ -147,14 +137,12 @@ store_filter = st.sidebar.slider(
     key=f"stores_{st.session_state.filter_reset}"
 )
 
-# Sort
 sort_by = st.sidebar.selectbox(
     "Sort By",
     ["Brand Name (A-Z)", "Investment (Low-High)", "Investment (High-Low)", "Franchise Fee (Low-High)"],
     key=f"sort_{st.session_state.filter_reset}"
 )
 
-# Categories
 selected_category = st.sidebar.multiselect(
     "Category", 
     options=df['category'].unique(), 
@@ -165,7 +153,6 @@ selected_category = st.sidebar.multiselect(
 # Filter data
 filtered_df = df[df['category'].isin(selected_category)].copy()
 
-# Apply investment filter - FIXED to handle "200k-400k" format
 filtered_df['min_inv'] = filtered_df['investment_usd'].apply(parse_investment_to_min)
 filtered_df['max_inv'] = filtered_df['investment_usd'].apply(parse_investment_to_max)
 filtered_df = filtered_df[
@@ -173,26 +160,22 @@ filtered_df = filtered_df[
     (filtered_df['min_inv'] <= investment_range[1])
 ]
 
-# Apply royalty filter
 filtered_df = filtered_df[
     (filtered_df['royalty_pct'] >= royalty_filter[0]) & 
     (filtered_df['royalty_pct'] <= royalty_filter[1])
 ]
 
-# Apply target market filter
 if target_markets:
     filtered_df = filtered_df[filtered_df['target_markets'].apply(
         lambda x: any(m in str(x) for m in target_markets)
     )]
 
-# Apply store filter
 filtered_df['stores_num'] = filtered_df['stores_japan'].str.extract('(\d+)')[0].fillna('0').astype(int)
 filtered_df = filtered_df[
     (filtered_df['stores_num'] >= store_filter[0]) & 
     (filtered_df['stores_num'] <= store_filter[1])
 ]
 
-# Sort
 if "Investment (Low-High)" in sort_by:
     filtered_df = filtered_df.sort_values('min_inv')
 elif "Investment (High-Low)" in sort_by:
@@ -204,11 +187,16 @@ else:
 
 st.subheader(f"💎 Found {len(filtered_df)} Brands")
 
-# BRAND CARDS
+# ENHANCED BRAND CARDS
 for idx, row in filtered_df.iterrows():
     brand_name = row['brand_name']
     initials = get_brand_initials(brand_name)
     brand_color = get_brand_color(brand_name)
+    
+    # Get enriched data (with fallbacks)
+    japan_regions = row.get('japan_regions', '') if 'japan_regions' in row else ''
+    overseas_countries = row.get('overseas_countries', '') if 'overseas_countries' in row else ''
+    hq_location = row.get('hq_location', '') if 'hq_location' in row else ''
     
     with st.container():
         col_logo, col_content, col_btn = st.columns([1, 4, 1])
@@ -223,22 +211,43 @@ for idx, row in filtered_df.iterrows():
         with col_content:
             st.markdown(f"**{brand_name}**")
             st.caption(row['category'])
-            st.write(f"🇯🇵 {row['stores_japan']} stores | 🌏 {row['stores_overseas']} overseas")
+            
+            # Japan stores with regions
+            japan_info = f"🇯🇵 {row['stores_japan']} stores"
+            if japan_regions and pd.notna(japan_regions):
+                japan_info += f" ({japan_regions})"
+            
+            # Overseas stores with countries
+            overseas_info = f"🌏 {row['stores_overseas']} overseas"
+            if overseas_countries and pd.notna(overseas_countries):
+                overseas_info += f" ({overseas_countries})"
+            
+            st.write(f"{japan_info} | {overseas_info}")
+            
+            # HQ Location
+            if hq_location and pd.notna(hq_location):
+                st.write(f"📍 HQ: {hq_location}")
+            
+            # Investment info
             st.write(f"💰 {row['investment_usd']} | Fee: ${int(row['franchise_fee_usd']):,} | {row['royalty_pct']}% royalty")
+            
+            # Target markets as tags
+            if row['target_markets'] and pd.notna(row['target_markets']):
+                markets = str(row['target_markets']).split(',')
+                st.markdown(" ".join([f'<span class="info-tag">🌍 {m.strip()}</span>' for m in markets]), unsafe_allow_html=True)
         
         with col_btn:
-            if st.button("🔍 View Details", key=f"view_{idx}"):
+            if st.button(" View Details", key=f"view_{idx}"):
                 st.session_state['selected_brand'] = brand_name
                 st.switch_page("pages/3_Brand_Profile.py")
         
         st.markdown("---")
 
-# INVESTMENT CALCULATOR with RESET button
+# INVESTMENT CALCULATOR
 st.markdown("---")
 st.markdown("### 💰 Investment Calculator")
 
 with st.expander("📊 Open Calculator", expanded=False):
-    # Reset button
     if st.button("🔄 Reset Calculator", key=f"calc_reset_btn_{st.session_state.calc_reset}"):
         st.session_state.calc_reset += 1
         st.rerun()

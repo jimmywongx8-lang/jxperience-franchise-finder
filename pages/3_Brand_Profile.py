@@ -1,9 +1,12 @@
 import streamlit as st
 import pandas as pd
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
 
 st.set_page_config(page_title="Brand Profile | JXPerience", page_icon="🔴", layout="wide")
 
-# Scroll to top button
 if st.button("️ Top", key="scroll_top_profile"):
     st.markdown("<script>window.scrollTo(0, 0)</script>", unsafe_allow_html=True)
 
@@ -30,7 +33,6 @@ def load_data():
 
 df = load_data()
 
-# Back button
 if st.button("⬅️ Back to All Brands"):
     if 'selected_brand' in st.session_state:
         del st.session_state['selected_brand']
@@ -93,7 +95,7 @@ if pd.notna(brand_data.get('notes', '')):
     st.info(brand_data['notes'])
 
 # Expansion
-st.subheader("🌍 Expansion Information")
+st.subheader(" Expansion Information")
 col1, col2 = st.columns(2)
 with col1:
     st.markdown("**Target Markets**")
@@ -105,19 +107,77 @@ with col2:
     website = brand_data['website'] if pd.notna(brand_data['website']) else ''
     st.markdown("**Website**")
     if website:
-        st.markdown(f"[ {website}](https://{website})")
+        st.markdown(f"🔗 {website}")
     st.markdown("**Verification Status**")
     st.write(brand_data.get('franchise_status', 'N/A'))
 
-# CTA
+# ========== ENHANCED KYC CONTACT FORM ==========
 st.markdown("---")
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("📊 Get AI Assessment", use_container_width=True):
-        st.session_state['selected_brand'] = brand_data['brand_name']
-        st.switch_page("app.py")
-with col2:
-    if st.button("📤 Contact Franchisor", use_container_width=True):
+st.markdown("### 📤 Contact Franchisor - Detailed Inquiry")
+
+st.info(" Please complete this detailed inquiry form. Japanese franchisors require comprehensive information to evaluate potential partners.")
+
+with st.form("enhanced_contact_form"):
+    st.subheader(" Personal Information")
+    col1, col2 = st.columns(2)
+    with col1:
+        full_name = st.text_input("Full Name *", placeholder="John Smith")
+        email = st.text_input("Email Address *", placeholder="john@company.com")
+        phone = st.text_input("Phone Number *", placeholder="+1-234-567-8900")
+        nationality = st.text_input("Nationality", placeholder="e.g., American, Thai, Singaporean")
+    
+    with col2:
+        company_name = st.text_input("Company Name", placeholder="Your Company Ltd.")
+        position = st.text_input("Position/Title", placeholder="CEO, Director, etc.")
+        company_website = st.text_input("Company Website", placeholder="www.yourcompany.com")
+        years_in_business = st.number_input("Years in Business", min_value=0, max_value=50, value=0)
+    
+    st.subheader(" Investment Capacity")
+    col1, col2 = st.columns(2)
+    with col1:
+        available_capital = st.selectbox(
+            "Available Investment Capital (USD) *",
+            ["< $100k", "$100k-$200k", "$200k-$300k", "$300k-$500k", 
+             "$500k-$1M", "$1M-$2M", "> $2M"]
+        )
+        financing_available = st.selectbox(
+            "Additional Financing Available",
+            ["None", "$50k-$100k", "$100k-$250k", "$250k-$500k", "> $500k"]
+        )
+    
+    with col2:
+        target_location = st.text_input("Target Location/Country *", 
+                                       placeholder="City, Country where you plan to open")
+        number_of_stores = st.selectbox(
+            "Number of Stores Planned",
+            ["1 store", "2-3 stores", "4-5 stores", "5+ stores (Multi-unit)"]
+        )
+        timeline = st.selectbox(
+            "Timeline to Open First Store",
+            ["Immediate (0-3 months)", "3-6 months", "6-12 months", 
+             "1-2 years", "Just researching"]
+        )
+    
+    st.subheader("💼 Business Experience")
+    col1, col2 = st.columns(2)
+    with col1:
+        fb_experience = st.selectbox(
+            "F&B Industry Experience",
+            ["No experience", "1-2 years", "3-5 years", "5-10 years", "> 10 years"]
+        )
+        fb_experience_type = st.multiselect(
+            "Type of F&B Experience",
+            ["Restaurant owner", "Restaurant manager", "Franchise operator", 
+             "Food service", "Retail", "Other"]
+        )
+    
+    with col2:
+        previous_franchise = st.radio(
+            "Previous Franchise Experience",
+            ["No", "Yes - 1 brand", "Yes - 2-3 brands", "Yes - 4+ brands"]
+        )
+        if previous_franchise != "No":
+            previous_franchise_details
         st.session_state['selected_brand'] = brand_data['brand_name']
         st.switch_page("app.py")
 

@@ -1,5 +1,8 @@
 import streamlit as st
 import pandas as pd
+from fpdf import FPDF
+import base64
+from datetime import datetime
 
 st.set_page_config(page_title="JXPerience", page_icon="🔴", layout="wide")
 
@@ -23,11 +26,12 @@ st.markdown("""
         display: inline-block;
         margin: 2px;
     }
-    .compare-checkbox {
-        background: #e3f2fd;
-        padding: 10px;
+    .compare-info {
+        background: #fff3cd;
+        padding: 10px 15px;
         border-radius: 8px;
-        margin: 10px 0;
+        border-left: 4px solid #ffc107;
+        font-size: 0.9rem;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -65,6 +69,10 @@ if 'calc_reset' not in st.session_state:
 # ========== COMPARISON FEATURE ==========
 if 'brands_to_compare' not in st.session_state:
     st.session_state.brands_to_compare = []
+if 'show_comparison' not in st.session_state:
+    st.session_state.show_comparison = False
+
+MAX_COMPARE = 3  # Maximum brands to compare
 
 def get_brand_initials(brand_name):
     words = str(brand_name).split()
@@ -100,6 +108,60 @@ def parse_investment_to_max(inv_str):
         return int(inv_str)
     except:
         return 0
+
+# PDF Generation Function
+def generate_comparison_pdf(compare_df):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    
+    # Title
+    pdf.set_font("Arial", 'B', 20)
+    pdf.cell(0, 15, "JXPerience - Brand Comparison", ln=True, align='C')
+    pdf.set_font("Arial", size=10)
+    pdf.cell(0, 10, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=True, align='C')
+    pdf.ln(10)
+    
+    # Comparison table
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "Side-by-Side Comparison", ln=True)
+    pdf.set_font("Arial", size=10)
+    
+    # Headers
+    metrics = ['Investment', 'Franchise Fee', 'Royalty', 'Japan Stores', 
+               'Overseas', 'Target Markets', 'HQ Location']
+    
+    col_width = 190 / (len(compare_df) + 1)
+    
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(col_width, 10, "Metric", border=1)
+    for brand in compare_df['brand_name']:
+        pdf.cell(col_width, 10, brand[:15], border=1, align='C')
+    pdf.ln()
+    
+    # Data rows
+    pdf.set_font("Arial", size=9)
+    for metric in metrics:
+        pdf.cell(col_width, 10, metric, border=1)
+        for idx, row in compare_df.iterrows():
+            if metric == 'Investment':
+                value = f"${row['investment_usd']}"
+            elif metric == 'Franchise Fee':
+                value = f"${int(row['franchise_fee_usd']):,}"
+            elif metric == 'Royalty':
+                value = f"{row['royalty_pct']}%"
+            elif metric == 'Japan Stores':
+                value = str(row['stores_japan'])
+            elif metric == 'Overseas':
+                value = str(row['stores_overseas'])
+            elif metric == 'Target Markets':
+                value = str(row['target_markets'])[:20]
+            elif metric == 'HQ Location':
+                value = str(row.get('hq_location', 'N/A'))[:20]
+            pdf.cell(col_width, 10, value, border=1, align='C')
+        pdf.ln()
+    
+    return pdf.output(dest='S').encode('latin-1')
 
 # Hero metrics
 col1, col2, col3 = st.columns(3)
@@ -198,37 +260,56 @@ else:
 st.subheader(f"💎 Found {len(filtered_df)} Brands")
 
 # ========== COMPARISON TOOLBAR ==========
-if len(st.session_state.brands_to_compare) > 0:
+num_selected = len(st.session_state.brands_to_compare)
+
+if num_selected > 0:
     st.markdown(f"""
-    <div style="background:#e3f2fd;padding:15px;border-radius:10px;margin:20px 0;">
-        <strong>📊 Comparing {len(st.session_state.brands_to_compare)} brands:</strong> 
-        {', '.join(st.session_state.brands_to_compare)}
+    <div style="background:#e3f2fd;padding:20px;border-radius:10px;margin:20px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <strong>📊 Comparing {num_selected} of {MAX_COMPARE} brands:</strong> 
+                {', '.join(st.session_state.brands_to_compare)}
+            </div>
+        </div>
+        <div style="margin-top:10px;font-size:0.85rem;color:#666;">
+            💡 Tip: Select up to {MAX_COMPARE} brands to compare side-by-side
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
-        if st.button("📊 View Comparison", use_container_width=True):
+        if st.button("📊 View Comparison", use_container_width=True, disabled=num_selected < 2):
             st.session_state.show_comparison = True
             st.rerun()
     with col2:
-        if st.button("️ Clear All", use_container_width=True):
-            st.session_state.brands_to_compare = []
-            st.rerun()
+        if num_selected >= 2:
+            compare_df = df[df['brand_name'].isin(st.session_state.brands_to_compare)]
+            pdf_bytes = generate_comparison_pdf(compare_df)
+            st.download_button(
+                label="📄 Export PDF",
+                data=pdf_bytes,
+                file_name=f"brand_comparison_{datetime.now().strftime('%Y%m%d')}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
     with col3:
+        if st.button("🗑️ Clear All", use_container_width=True):
+            st.session_state.brands_to_compare = []
+            st.session_state.show_comparison = False
+            st.rerun()
+    with col4:
         if st.button("⬅️ Back to Browse", use_container_width=True):
             st.session_state.show_comparison = False
             st.rerun()
 
 # Show comparison view
-if st.session_state.get('show_comparison', False) and len(st.session_state.brands_to_compare) >= 2:
+if st.session_state.show_comparison and num_selected >= 2:
     st.markdown("---")
     st.subheader("📊 Brand Comparison")
     
-    # Get comparison data
     compare_df = df[df['brand_name'].isin(st.session_state.brands_to_compare)]
     
-    # Create comparison table
     st.markdown("### Side-by-Side Comparison")
     
     comparison_data = {
@@ -277,8 +358,6 @@ if st.session_state.get('show_comparison', False) and len(st.session_state.brand
                 <p><strong>Markets:</strong> {brand_data['target_markets']}</p>
             </div>
             """, unsafe_allow_html=True)
-    
-    st.stop()  # Stop here if showing comparison
 
 # BRAND CARDS with comparison checkboxes
 for idx, row in filtered_df.iterrows():
@@ -286,7 +365,6 @@ for idx, row in filtered_df.iterrows():
     initials = get_brand_initials(brand_name)
     brand_color = get_brand_color(brand_name)
     
-    # Get enriched data
     japan_regions = row.get('japan_regions', '') if 'japan_regions' in row else ''
     overseas_countries = row.get('overseas_countries', '') if 'overseas_countries' in row else ''
     hq_location = row.get('hq_location', '') if 'hq_location' in row else ''
@@ -302,16 +380,17 @@ for idx, row in filtered_df.iterrows():
             """, unsafe_allow_html=True)
         
         with col_content:
-            # Comparison checkbox
+            # Comparison checkbox with max limit info
             is_selected = brand_name in st.session_state.brands_to_compare
-            if st.checkbox(f"Compare", value=is_selected, key=f"compare_{brand_name}", 
-                          help="Select to compare with other brands"):
+            can_select = num_selected < MAX_COMPARE or is_selected
+            
+            compare_label = f"Compare ({num_selected}/{MAX_COMPARE})"
+            checkbox = st.checkbox(compare_label, value=is_selected, key=f"compare_{brand_name}", 
+                                  disabled=not can_select)
+            
+            if checkbox:
                 if brand_name not in st.session_state.brands_to_compare:
-                    if len(st.session_state.brands_to_compare) < 3:
-                        st.session_state.brands_to_compare.append(brand_name)
-                    else:
-                        st.warning("You can compare up to 3 brands at a time")
-                        st.session_state.brands_to_compare = [b for b in st.session_state.brands_to_compare if b != brand_name]
+                    st.session_state.brands_to_compare.append(brand_name)
             else:
                 if brand_name in st.session_state.brands_to_compare:
                     st.session_state.brands_to_compare.remove(brand_name)
@@ -319,7 +398,7 @@ for idx, row in filtered_df.iterrows():
             st.markdown(f"**{brand_name}**")
             st.caption(row['category'])
             
-            japan_info = f"🇯🇵 {row['stores_japan']} stores"
+            japan_info = f"🇵 {row['stores_japan']} stores"
             if japan_regions and pd.notna(japan_regions):
                 japan_info += f" ({japan_regions})"
             
@@ -349,7 +428,7 @@ for idx, row in filtered_df.iterrows():
 st.markdown("---")
 st.markdown("### 💰 Investment Calculator")
 
-with st.expander(" Open Calculator", expanded=False):
+with st.expander("📊 Open Calculator", expanded=False):
     if st.button("🔄 Reset Calculator", key=f"calc_reset_btn_{st.session_state.calc_reset}"):
         st.session_state.calc_reset += 1
         st.rerun()
@@ -379,6 +458,6 @@ with st.expander(" Open Calculator", expanded=False):
         elif roi > 15:
             st.info("ℹ️ Good ROI")
         else:
-            st.warning("️ Low ROI")
+            st.warning("⚠️ Low ROI")
 
 st.caption("© 2026 JXPerience")

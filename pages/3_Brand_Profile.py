@@ -4,8 +4,6 @@ import pandas as pd
 st.set_page_config(page_title="Brand Profile | JXPerience", page_icon="🔴", layout="wide")
 
 def get_brand_initials(brand_name):
-    if not brand_name:
-        return "??"
     words = str(brand_name).split()
     if len(words) >= 2:
         return (words[0][0] + words[1][0]).upper()
@@ -14,8 +12,7 @@ def get_brand_initials(brand_name):
 def get_brand_color(brand_name):
     colors = ['#0066cc', '#0052a3', '#1976d2', '#0288d1', '#0097a7', 
               '#00796b', '#388e3c', '#689f38', '#afb42b', '#fbc02d']
-    hash_val = sum(ord(c) for c in str(brand_name)) % len(colors)
-    return colors[hash_val]
+    return colors[sum(ord(c) for c in str(brand_name)) % len(colors)]
 
 @st.cache_data
 def load_data():
@@ -47,25 +44,23 @@ if brand_data.empty:
     st.stop()
 brand_data = brand_data.iloc[0]
 
-# Get initials and color
 initials = get_brand_initials(brand_name)
 brand_color = get_brand_color(brand_name)
 
-# Header with colored logo
+# Header
 col_logo, col_info = st.columns([1, 5])
 with col_logo:
     st.markdown(f"""
-        <div style="width:120px;height:120px;border-radius:12px;background-color:{brand_color};
+        <div style="width:100px;height:100px;border-radius:12px;background-color:{brand_color};
                     display:flex;align-items:center;justify-content:center;
-                    color:white;font-weight:bold;font-size:3rem;
-                    box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                    color:white;font-weight:bold;font-size:2.5rem;">
             {initials}
         </div>
     """, unsafe_allow_html=True)
 
 with col_info:
     st.title(brand_data['brand_name'])
-    st.caption(f"{brand_data['category']}")
+    st.caption(brand_data['category'])
     
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -77,50 +72,41 @@ with col_info:
 
 st.markdown("---")
 
-# Investment Overview
+# Investment
 st.subheader("💰 Investment Overview")
 col1, col2, col3 = st.columns(3)
 with col1:
     st.metric("Total Investment", brand_data['investment_usd'], "USD")
 with col2:
     fee = int(brand_data['franchise_fee_usd']) if pd.notna(brand_data['franchise_fee_usd']) else 0
-    st.metric("Franchise Fee", f"${fee:,}", "One-time fee")
+    st.metric("Franchise Fee", f"${fee:,}", "One-time")
 with col3:
-    royalty = brand_data['royalty_pct'] if pd.notna(brand_data['royalty_pct']) else 'N/A'
-    st.metric("Royalty Fee", f"{royalty}%", "Monthly")
+    st.metric("Royalty Fee", f"{brand_data['royalty_pct']}%", "Monthly")
 
 # About
-if pd.notna(brand_data.get('notes', '')) and brand_data.get('notes', '') != '':
+if pd.notna(brand_data.get('notes', '')):
     st.subheader(" About This Brand")
     st.info(brand_data['notes'])
 
-# Expansion Info
-st.subheader("🌍 Expansion Information")
+# Expansion
+st.subheader(" Expansion Information")
 col1, col2 = st.columns(2)
 with col1:
     st.markdown("**Target Markets**")
     st.write(brand_data['target_markets'])
-    
-    exp_type = brand_data.get('expansion_type', 'Single-unit') if 'expansion_type' in brand_data else 'Single-unit'
     st.markdown("**Expansion Type**")
-    st.write(exp_type)
+    st.write(brand_data.get('expansion_type', 'Single-unit'))
 
 with col2:
     website = brand_data['website'] if pd.notna(brand_data['website']) else ''
     st.markdown("**Website**")
     if website:
         st.markdown(f"[🔗 {website}](https://{website})")
-    else:
-        st.write("N/A")
-    
-    status = brand_data.get('franchise_status', 'N/A')
     st.markdown("**Verification Status**")
-    st.write(status if status else 'N/A')
+    st.write(brand_data.get('franchise_status', 'N/A'))
 
 # CTA
 st.markdown("---")
-st.info(" **Ready to Learn More?** Get the complete investment prospectus and connect directly with the franchisor.")
-
 col1, col2 = st.columns(2)
 with col1:
     if st.button("📊 Get AI Assessment", use_container_width=True):
@@ -131,5 +117,4 @@ with col2:
         st.session_state['selected_brand'] = brand_data['brand_name']
         st.switch_page("app.py")
 
-st.markdown("---")
 st.caption("© 2026 JXPerience")

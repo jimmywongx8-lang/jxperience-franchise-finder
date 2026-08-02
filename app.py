@@ -4,6 +4,7 @@ from openai import OpenAI
 
 st.set_page_config(page_title="JXPerience", page_icon="🔴", layout="wide")
 
+# Custom CSS for scroll to top button
 st.markdown("""
     <style>
     .metric-card {
@@ -16,10 +17,25 @@ st.markdown("""
         color: white; font-weight: bold; font-size: 1.8rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
+    .scroll-to-top {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #0066cc;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        z-index: 1000;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🔴 JXPerience")
+# Scroll to top button
+if st.button("⬆️ Top", key="scroll_top"):
+    st.markdown("<script>window.scrollTo(0, 0)</script>", unsafe_allow_html=True)
+
+st.title(" JXPerience")
 st.markdown("### Japanese Franchise Overseas Expansion Platform")
 
 @st.cache_data
@@ -39,6 +55,10 @@ if df.empty:
 
 if 'selected_brand' in st.session_state:
     del st.session_state['selected_brand']
+
+# Initialize calculator state
+if 'calc_reset' not in st.session_state:
+    st.session_state.calc_reset = False
 
 def get_brand_initials(brand_name):
     words = str(brand_name).split()
@@ -63,7 +83,7 @@ with col3:
 st.markdown("---")
 
 # Sidebar with ADVANCED FILTERS
-st.sidebar.header("🔍 Advanced Filters")
+st.sidebar.header(" Advanced Filters")
 
 # Investment Range Slider
 investment_range = st.sidebar.slider(
@@ -109,37 +129,55 @@ selected_category = st.sidebar.multiselect(
 # Filter data
 filtered_df = df[df['category'].isin(selected_category)].copy()
 
-# Apply investment filter
-filtered_df['min_inv'] = filtered_df['investment_usd'].str.extract('(\d+)')[0].astype(int)
-filtered_df = filtered_df[
-    (filtered_df['min_inv'] >= investment_range[0]) & 
-    (filtered_df['min_inv'] <= investment_range[1])
-]
+# Apply investment filter - FIXED: Handle missing columns
+try:
+    filtered_df['min_inv'] = filtered_df['investment_usd'].str.extract('(\d+)')[0].fillna('0').astype(int)
+    filtered_df = filtered_df[
+        (filtered_df['min_inv'] >= investment_range[0]) & 
+        (filtered_df['min_inv'] <= investment_range[1])
+    ]
+except:
+    pass  # Skip if column doesn't exist
 
 # Apply royalty filter
-filtered_df = filtered_df[
-    (filtered_df['royalty_pct'] >= royalty_filter[0]) & 
-    (filtered_df['royalty_pct'] <= royalty_filter[1])
-]
+try:
+    filtered_df = filtered_df[
+        (filtered_df['royalty_pct'] >= royalty_filter[0]) & 
+        (filtered_df['royalty_pct'] <= royalty_filter[1])
+    ]
+except:
+    pass
 
 # Apply target market filter
 if target_markets:
-    filtered_df = filtered_df[filtered_df['target_markets'].apply(
-        lambda x: any(m in str(x) for m in target_markets)
-    )]
+    try:
+        filtered_df = filtered_df[filtered_df['target_markets'].apply(
+            lambda x: any(m in str(x) for m in target_markets)
+        )]
+    except:
+        pass
 
-# Apply store filter
-filtered_df['stores_num'] = filtered_df['stores_japan'].str.extract('(\d+)')[0].astype(int)
-filtered_df = filtered_df[
-    (filtered_df['stores_num'] >= store_filter[0]) & 
-    (filtered_df['stores_num'] <= store_filter[1])
-]
+# Apply store filter - FIXED: Handle missing columns
+try:
+    filtered_df['stores_num'] = filtered_df['stores_japan'].str.extract('(\d+)')[0].fillna('0').astype(int)
+    filtered_df = filtered_df[
+        (filtered_df['stores_num'] >= store_filter[0]) & 
+        (filtered_df['stores_num'] <= store_filter[1])
+    ]
+except:
+    pass
 
 # Sort
 if "Investment (Low-High)" in sort_by:
-    filtered_df = filtered_df.sort_values('min_inv')
+    try:
+        filtered_df = filtered_df.sort_values('min_inv')
+    except:
+        pass
 elif "Investment (High-Low)" in sort_by:
-    filtered_df = filtered_df.sort_values('min_inv', ascending=False)
+    try:
+        filtered_df = filtered_df.sort_values('min_inv', ascending=False)
+    except:
+        pass
 else:
     filtered_df = filtered_df.sort_values('brand_name')
 
@@ -164,7 +202,7 @@ for idx, row in filtered_df.iterrows():
         with col_content:
             st.markdown(f"**{brand_name}**")
             st.caption(row['category'])
-            st.write(f"🇵 {row['stores_japan']} stores | 🌏 {row['stores_overseas']} overseas")
+            st.write(f"🇯🇵 {row['stores_japan']} stores | 🌏 {row['stores_overseas']} overseas")
             st.write(f"💰 {row['investment_usd']} | Fee: ${int(row['franchise_fee_usd']):,} | {row['royalty_pct']}% royalty")
         
         with col_btn:
@@ -174,16 +212,28 @@ for idx, row in filtered_df.iterrows():
         
         st.markdown("---")
 
-# INVESTMENT CALCULATOR
+# INVESTMENT CALCULATOR with RESET button
 st.markdown("---")
-with st.expander("💰 Investment Calculator", expanded=False):
+st.markdown("### 💰 Investment Calculator")
+
+calc_col1, calc_col2 = st.columns([2, 1])
+with calc_col1:
+    calculator_expanded = st.expander("Open Calculator", expanded=False)
+
+with calculator_expanded:
+    # Reset button
+    if st.button("🔄 Reset Calculator"):
+        st.session_state.calc_reset = not st.session_state.calc_reset
+    
     col1, col2 = st.columns(2)
     
     with col1:
-        investment = st.number_input("Total Investment ($)", value=300000, step=10000)
-        revenue = st.number_input("Monthly Revenue ($)", value=50000, step=5000)
-        margin = st.slider("Profit Margin (%)", 5, 30, 15)
-        royalty = st.number_input("Royalty (%)", 0.0, 10.0, 5.0)
+        # Use unique keys for reset functionality
+        reset_key = st.session_state.calc_reset
+        investment = st.number_input("Total Investment ($)", value=300000, step=10000, key=f"inv_{reset_key}")
+        revenue = st.number_input("Monthly Revenue ($)", value=50000, step=5000, key=f"rev_{reset_key}")
+        margin = st.slider("Profit Margin (%)", 5, 30, 15, key=f"margin_{reset_key}")
+        royalty = st.number_input("Royalty (%)", 0.0, 10.0, 5.0, key=f"roy_{reset_key}")
     
     with col2:
         monthly_profit = revenue * (margin / 100)
@@ -196,5 +246,12 @@ with st.expander("💰 Investment Calculator", expanded=False):
         st.metric("Net Profit (after royalty)", f"${net_profit:,.0f}")
         st.metric("Break-Even", f"{break_even:.1f} months")
         st.metric("Annual ROI", f"{roi:.1f}%")
+        
+        if roi > 20:
+            st.success("✅ Excellent ROI!")
+        elif roi > 15:
+            st.info("️ Good ROI")
+        else:
+            st.warning("⚠️ Low ROI")
 
 st.caption("© 2026 JXPerience")

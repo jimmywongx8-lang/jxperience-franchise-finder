@@ -124,12 +124,12 @@ st.title("🍣 JXPerience: Japanese Franchise Overseas Expansion")
 st.markdown("A non-profit initiative to support the global growth of authentic Japanese cuisine.")
 
 # FEATURE 1: Prominent Disclaimer
-st.warning("️ **Data Disclaimer:** Financial figures (investment, fees, revenue) are **estimates based on industry averages** and publicly available data. They are for informational purposes only. Always verify with official Franchise Disclosure Documents (FDD) and contact the franchisor directly before making investment decisions.")
+st.warning("⚠️ **Data Disclaimer:** Financial figures (investment, fees, revenue) are **estimates based on industry averages** and publicly available data. They are for informational purposes only. Always verify with official Franchise Disclosure Documents (FDD) and contact the franchisor directly before making investment decisions.")
 
 st.sidebar.success(f"📊 **{len(df)} Japanese Franchises** in database")
 
 # Sidebar Filters
-st.sidebar.header(" Filter Brands")
+st.sidebar.header("🔍 Filter Brands")
 cuisine_filter = st.sidebar.multiselect("Cuisine Type", options=df['cuisine'].unique(), default=df['cuisine'].unique())
 min_investment = st.sidebar.slider("Max Investment (USD)", 0, 700000, 700000)
 min_overseas = st.sidebar.slider("Min Overseas Stores", 0, 500, 0)
@@ -141,7 +141,7 @@ filtered_df = df[
 ].copy()
 
 # --- 5. Tabs ---
-tab1, tab2, tab3 = st.tabs(["📊 Brand Directory", "🧮 ROI Calculator", "⚖️ Brand Comparison"])
+tab1, tab2, tab3 = st.tabs([" Brand Directory", "🧮 ROI Calculator", "⚖️ Brand Comparison"])
 
 with tab1:
     st.subheader(f"Available Franchise Opportunities ({len(filtered_df)} brands)")
@@ -168,7 +168,7 @@ with tab1:
             # FEATURE 3: Official Source Links
             st.markdown("---")
             if selected_brand in OFFICIAL_URLS:
-                st.markdown(f"** Official Website:** [{selected_brand} Official Site]({OFFICIAL_URLS[selected_brand]})")
+                st.markdown(f"**🌐 Official Website:** [{selected_brand} Official Site]({OFFICIAL_URLS[selected_brand]})")
             else:
                 search_url = f"https://www.google.com/search?q={selected_brand.replace(' ', '+')}+official+website+franchise"
                 st.markdown(f"**🌐 Official Website:** [Search for '{selected_brand}' Official Site]({search_url})")
@@ -183,7 +183,7 @@ with tab1:
             youtube_url = f"https://www.youtube.com/results?search_query={search_query}+franchise+review"
             st.markdown(f"**🎥 Intro Video:** [Search YouTube for '{selected_brand}']({youtube_url})")
 
-        # FEATURE 2: Report Incorrect Data Feature
+        # FEATURE 2: Report Incorrect Data Feature (FIXED)
         st.markdown("---")
         st.subheader("📢 Report Data Issue")
         st.caption("Help us keep our database accurate. If you spot incorrect financial data or store counts, let us know!")
@@ -191,19 +191,21 @@ with tab1:
         with st.form("report_form"):
             issue_type = st.selectbox("Issue Type", ["Incorrect Financial Data", "Outdated Store Count", "Wrong Brand Info", "Other"])
             details = st.text_area("Please describe the correct information or issue:", placeholder="e.g., The franchise fee for this brand is actually $30,000...")
-            submitted = st.form_submit_button(" Generate Report Email")
+            submitted = st.form_submit_button("📧 Generate Report Email")
             
             if submitted:
                 if details:
                     subject = f"Data Issue Report: {selected_brand}"
                     body = f"Hello JXPerience Team,%0D%0A%0D%0AI would like to report a data issue for the brand: {selected_brand}.%0D%0A%0D%0A**Issue Type:** {issue_type}%0D%0A**Details:**%0D%0A{details.replace(' ', '%20').replace('\n', '%0D%0A')}"
                     mailto_link = f"mailto:support@jxperience.com?subject={subject}&body={body}"
-                    st.success(f"✅ [Click here to send this report via your email client]({mailto_link})")
+                    
+                    # Use st.markdown to render the clickable link
+                    st.markdown(f"✅ **[Click here to send this report via your email client]({mailto_link})**")
                 else:
                     st.error("Please provide details before sending.")
 
 with tab2:
-    st.subheader("🧮 Franchise ROI Estimator")
+    st.subheader(" Franchise ROI Estimator")
     st.markdown("Estimate your potential return on investment based on average brand performance.")
     
     calc_col1, calc_col2 = st.columns(2)
@@ -225,7 +227,7 @@ with tab2:
         st.metric("Projected ROI", f"{roi:.1f}%", delta=f"${total_profit - initial_investment:,.2f} net gain")
 
 with tab3:
-    st.subheader("⚖️ Side-by-Side Brand Comparison")
+    st.subheader("️ Side-by-Side Brand Comparison")
     
     compare_options = st.multiselect(
         "Select 2 or more brands to compare:",

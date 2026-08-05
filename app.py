@@ -141,7 +141,7 @@ filtered_df = df[
 ].copy()
 
 # --- 5. Tabs ---
-tab1, tab2, tab3 = st.tabs([" Brand Directory", "🧮 ROI Calculator", "⚖️ Brand Comparison"])
+tab1, tab2, tab3 = st.tabs(["📊 Brand Directory", "🧮 ROI Calculator", "⚖️ Brand Comparison"])
 
 with tab1:
     st.subheader(f"Available Franchise Opportunities ({len(filtered_df)} brands)")
@@ -181,11 +181,11 @@ with tab1:
             
             search_query = selected_brand.replace(" ", "+")
             youtube_url = f"https://www.youtube.com/results?search_query={search_query}+franchise+review"
-            st.markdown(f"**🎥 Intro Video:** [Search YouTube for '{selected_brand}']({youtube_url})")
+            st.markdown(f"** Intro Video:** [Search YouTube for '{selected_brand}']({youtube_url})")
 
         # FEATURE 2: Report Incorrect Data Feature (FIXED)
         st.markdown("---")
-        st.subheader("📢 Report Data Issue")
+        st.subheader(" Report Data Issue")
         st.caption("Help us keep our database accurate. If you spot incorrect financial data or store counts, let us know!")
         
         with st.form("report_form"):
@@ -196,16 +196,19 @@ with tab1:
             if submitted:
                 if details:
                     subject = f"Data Issue Report: {selected_brand}"
-                    body = f"Hello JXPerience Team,%0D%0A%0D%0AI would like to report a data issue for the brand: {selected_brand}.%0D%0A%0D%0A**Issue Type:** {issue_type}%0D%0A**Details:**%0D%0A{details.replace(' ', '%20').replace('\n', '%0D%0A')}"
+                    # Clean up the body text for the email
+                    clean_details = details.replace('\n', ' ')
+                    body = f"Hello JXPerience Team,%0D%0A%0D%0AI would like to report a data issue for the brand: {selected_brand}.%0D%0A%0D%0A**Issue Type:** {issue_type}%0D%0A**Details:** {clean_details}"
                     mailto_link = f"mailto:support@jxperience.com?subject={subject}&body={body}"
                     
-                    # Use st.markdown to render the clickable link
-                    st.markdown(f"✅ **[Click here to send this report via your email client]({mailto_link})**")
+                    # This creates a real clickable button
+                    st.success("Report generated successfully!")
+                    st.link_button(" Click here to open your email client", mailto_link)
                 else:
                     st.error("Please provide details before sending.")
 
 with tab2:
-    st.subheader(" Franchise ROI Estimator")
+    st.subheader("🧮 Franchise ROI Estimator")
     st.markdown("Estimate your potential return on investment based on average brand performance.")
     
     calc_col1, calc_col2 = st.columns(2)
@@ -227,7 +230,7 @@ with tab2:
         st.metric("Projected ROI", f"{roi:.1f}%", delta=f"${total_profit - initial_investment:,.2f} net gain")
 
 with tab3:
-    st.subheader("️ Side-by-Side Brand Comparison")
+    st.subheader("⚖️ Side-by-Side Brand Comparison")
     
     compare_options = st.multiselect(
         "Select 2 or more brands to compare:",

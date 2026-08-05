@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 
 # --- 1. Page Configuration ---
-st.set_page_config(page_title="JXPerience", page_icon="", layout="wide")
+st.set_page_config(page_title="JXPerience", page_icon="🍣", layout="wide")
 
 # --- 2. Data Loading ---
 @st.cache_data
@@ -88,7 +88,7 @@ filtered_df = df[
 ].copy()
 
 # --- 5. Tabs ---
-tab1, tab2, tab3 = st.tabs(["📊 Brand Directory", "🧮 ROI Calculator", "⚖️ Brand Comparison"])
+tab1, tab2, tab3 = st.tabs(["📊 Brand Directory", " ROI Calculator", "⚖️ Brand Comparison"])
 
 with tab1:
     st.subheader("Available Franchise Opportunities")
@@ -115,7 +115,6 @@ with tab1:
             st.write("**⚠️ Cons:**")
             st.write(f"- {brand_data['cons']}")
             
-            # Dynamic YouTube Search Link - NO MORE example.com!
             search_query = brand_data['brand_name'].replace(" ", "+")
             youtube_url = f"https://www.youtube.com/results?search_query={search_query}+franchise+review"
             st.markdown(f"**🎥 Intro Video:** [Search YouTube for '{brand_data['brand_name']}']({youtube_url})")
@@ -165,4 +164,12 @@ with tab3:
     
     with col2:
         if num_selected >= 2:
-            compare_df = df[df['brand_name'].isin(st.session_state.br
+            compare_df = df[df['brand_name'].isin(st.session_state.brands_to_compare)]
+            html_content = create_comparison_html(compare_df)
+            st.download_button(
+                label="📄 Download Comparison as HTML",
+                data=html_content,
+                file_name=f"brand_comparison_{datetime.now().strftime('%Y%m%d')}.html",
+                mime="text/html",
+                use_container_width=True
+            )

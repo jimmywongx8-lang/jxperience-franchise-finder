@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 
 # --- 1. Page Configuration ---
-st.set_page_config(page_title="JXPerience", page_icon="🍣", layout="wide")
+st.set_page_config(page_title="JXPerience", page_icon="", layout="wide")
 
 # --- 2. Data Loading ---
 @st.cache_data
@@ -21,7 +21,6 @@ def load_data():
         'target_markets': ['USA, UK, Australia', 'Asia, Europe', 'North America', 'Southeast Asia', 'USA, Canada'],
         'avg_monthly_revenue_usd': [45000, 35000, 25000, 40000, 30000],
         'avg_monthly_cost_usd': [30000, 25000, 18000, 28000, 22000],
-        'video_link': ['https://example.com/sushi', 'https://example.com/ramen', 'https://example.com/matcha', 'https://example.com/tonkatsu', 'https://example.com/yakitori'],
         'pros': ['High brand recognition', 'Standardized operations', 'Strong supply chain', 'Premium positioning', 'Authentic experience'],
         'cons': ['High initial investment', 'Strict quality control', 'Limited menu flexibility', 'Complex kitchen setup', 'Niche market appeal']
     }
@@ -94,7 +93,7 @@ filtered_df = df[
 ].copy()
 
 # --- 5. Tabs for Different Views ---
-tab1, tab2, tab3 = st.tabs(["📊 Brand Directory", "🧮 ROI Calculator", "⚖️ Brand Comparison"])
+tab1, tab2, tab3 = st.tabs(["📊 Brand Directory", "🧮 ROI Calculator", "️ Brand Comparison"])
 
 # TAB 1: Brand Directory & Profiles
 with tab1:
@@ -115,16 +114,21 @@ with tab1:
             st.write(f"**Royalty:** {brand_data['royalty_pct']}%")
             st.write(f"**Stores (Japan):** {brand_data['stores_japan']}")
             st.write(f"**Stores (Overseas):** {brand_data['stores_overseas']}")
+            st.write(f"**Target Markets:** {brand_data['target_markets']}")
         with col2:
             st.write("**✅ Pros:**")
             st.write(f"- {brand_data['pros']}")
             st.write("**⚠️ Cons:**")
             st.write(f"- {brand_data['cons']}")
-            st.markdown(f"**🎥 Intro Video:** [Watch Brand Introduction]({brand_data['video_link']})")
+            
+            # Dynamic YouTube Search Link
+            search_query = brand_data['brand_name'].replace(" ", "+")
+            youtube_url = f"https://www.youtube.com/results?search_query={search_query}+franchise+review"
+            st.markdown(f"**🎥 Intro Video:** [Search YouTube for '{brand_data['brand_name']}']({youtube_url})")
 
 # TAB 2: ROI Calculator
 with tab2:
-    st.subheader("🧮 Franchise ROI Estimator")
+    st.subheader(" Franchise ROI Estimator")
     st.markdown("Estimate your potential return on investment based on average brand performance.")
     
     calc_col1, calc_col2 = st.columns(2)
@@ -147,7 +151,7 @@ with tab2:
 
 # TAB 3: Brand Comparison (The fixed part!)
 with tab3:
-    st.subheader("⚖️ Side-by-Side Brand Comparison")
+    st.subheader("️ Side-by-Side Brand Comparison")
     
     # Comparison selection
     compare_options = st.multiselect(

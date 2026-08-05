@@ -8,8 +8,6 @@ st.set_page_config(page_title="JXPerience", page_icon="", layout="wide")
 # --- 2. Data Loading ---
 @st.cache_data
 def load_data():
-    # Comprehensive dummy data reflecting Japanese franchise expansion
-    # Replace this with your actual CSV/Database loading logic (e.g., pd.read_csv("data.csv"))
     data = {
         'brand_name': ['Sushi Master', 'Ramen King', 'Matcha Cafe', 'Tonkatsu Pro', 'Yakitori Lane'],
         'cuisine': ['Sushi', 'Ramen', 'Cafe', 'Tonkatsu', 'Yakitori'],
@@ -28,13 +26,11 @@ def load_data():
 
 df = load_data()
 
-# Initialize session state for comparisons
 if 'brands_to_compare' not in st.session_state:
     st.session_state.brands_to_compare = []
 
 # --- 3. Helper Functions ---
 def create_comparison_html(compare_df):
-    """Create HTML table for download"""
     html = f"""
     <html>
     <head><title>JXPerience - Brand Comparison</title></head>
@@ -85,17 +81,15 @@ cuisine_filter = st.sidebar.multiselect("Cuisine Type", options=df['cuisine'].un
 min_investment = st.sidebar.slider("Max Investment (USD)", 0, 200000, 200000)
 min_overseas = st.sidebar.slider("Min Overseas Stores", 0, 500, 0)
 
-# Apply Filters
 filtered_df = df[
     (df['cuisine'].isin(cuisine_filter)) &
     (df['investment_usd'] <= min_investment) &
     (df['stores_overseas'] >= min_overseas)
 ].copy()
 
-# --- 5. Tabs for Different Views ---
-tab1, tab2, tab3 = st.tabs(["📊 Brand Directory", "🧮 ROI Calculator", "️ Brand Comparison"])
+# --- 5. Tabs ---
+tab1, tab2, tab3 = st.tabs(["📊 Brand Directory", "🧮 ROI Calculator", "⚖️ Brand Comparison"])
 
-# TAB 1: Brand Directory & Profiles
 with tab1:
     st.subheader("Available Franchise Opportunities")
     st.dataframe(filtered_df[['brand_name', 'cuisine', 'investment_usd', 'stores_japan', 'stores_overseas']], use_container_width=True)
@@ -121,14 +115,13 @@ with tab1:
             st.write("**⚠️ Cons:**")
             st.write(f"- {brand_data['cons']}")
             
-            # Dynamic YouTube Search Link
+            # Dynamic YouTube Search Link - NO MORE example.com!
             search_query = brand_data['brand_name'].replace(" ", "+")
             youtube_url = f"https://www.youtube.com/results?search_query={search_query}+franchise+review"
             st.markdown(f"**🎥 Intro Video:** [Search YouTube for '{brand_data['brand_name']}']({youtube_url})")
 
-# TAB 2: ROI Calculator
 with tab2:
-    st.subheader(" Franchise ROI Estimator")
+    st.subheader("🧮 Franchise ROI Estimator")
     st.markdown("Estimate your potential return on investment based on average brand performance.")
     
     calc_col1, calc_col2 = st.columns(2)
@@ -149,11 +142,9 @@ with tab2:
         st.info(f"**Total Profit over {projection_years} years:** ${total_profit:,.2f}")
         st.metric("Projected ROI", f"{roi:.1f}%", delta=f"${total_profit - initial_investment:,.2f} net gain")
 
-# TAB 3: Brand Comparison (The fixed part!)
 with tab3:
-    st.subheader("️ Side-by-Side Brand Comparison")
+    st.subheader("⚖️ Side-by-Side Brand Comparison")
     
-    # Comparison selection
     compare_options = st.multiselect(
         "Select 2 or more brands to compare:",
         options=df['brand_name'].tolist(),
@@ -162,9 +153,6 @@ with tab3:
     st.session_state.brands_to_compare = compare_options
     num_selected = len(st.session_state.brands_to_compare)
     
-    # ==========================================
-    # THE FIX: Define columns BEFORE using them!
-    # ==========================================
     col1, col2 = st.columns(2)
     
     with col1:
@@ -173,16 +161,8 @@ with tab3:
             compare_df = df[df['brand_name'].isin(st.session_state.brands_to_compare)]
             st.dataframe(compare_df[['brand_name', 'investment_usd', 'franchise_fee_usd', 'royalty_pct', 'stores_overseas']], use_container_width=True)
         else:
-            st.warning("⚠️ Please select at least 2 brands to enable comparison and download.")
+            st.warning("️ Please select at least 2 brands to enable comparison and download.")
     
     with col2:
         if num_selected >= 2:
-            compare_df = df[df['brand_name'].isin(st.session_state.brands_to_compare)]
-            html_content = create_comparison_html(compare_df)
-            st.download_button(
-                label="📄 Download Comparison as HTML",
-                data=html_content,
-                file_name=f"brand_comparison_{datetime.now().strftime('%Y%m%d')}.html",
-                mime="text/html",
-                use_container_width=True
-            )
+            compare_df = df[df['brand_name'].isin(st.session_state.br
